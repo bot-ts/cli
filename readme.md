@@ -1,6 +1,6 @@
 # make-bot.ts CLI
 
-CLI for [bot.ts](https://github.com/CamilleAbella/bot.ts) projects.
+CLI for make Discord bots in TypeScript quickly using [CamilleAbella/bot.ts](https://github.com/CamilleAbella/bot.ts) template.
 
 ```
 Commands:
