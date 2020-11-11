@@ -39,46 +39,30 @@ yargs(helpers.hideBin(process.argv))
       console.log("done")
     }
   )
-  .command(
-    "command [name]",
-    "create bot command",
-    (yargs) => {
-      yargs.positional("name", {
-        default: "name",
-        describe: "command name",
-      })
-    },
-    async ({ name }) => {
-      const template = await fsp.readFile(
-        join(__dirname, "..", "templates", "command"),
-        { encoding: "utf8" }
-      )
-      const command = template.replace(/{{ name }}/g, name)
-      const path = join(process.cwd(), "commands", name)
-      if (fs.existsSync(path)) return console.error("command already exists")
-      await fsp.writeFile(path + ".ts", command)
-      console.log("done")
-    }
-  )
-  .command(
-    "listener [event]",
-    "create bot listener",
-    (yargs) => {
-      yargs.positional("event", {
-        default: "event",
-        describe: "listener event name",
-      })
-    },
-    async ({ event }) => {
-      const template = await fsp.readFile(
-        join(__dirname, "..", "templates", "listener"),
-        { encoding: "utf8" }
-      )
-      const listener = template.replace(/{{ event }}/g, event)
-      const path = join(process.cwd(), "listeners", name)
-      if (fs.existsSync(path)) return console.error("listener already exists")
-      await fsp.writeFile(path + ".ts", listener)
-      console.log("done")
-    }
-  )
+  .command(...makeFile("command", "name"))
+  .command(...makeFile("listener", "event"))
   .help().argv
+
+function makeFile(id, arg) {
+  return [
+    `${id} [${arg}]`,
+    "create bot " + id,
+    (yargs) => {
+      yargs.positional(arg, {
+        default: arg,
+        describe: id + " " + arg,
+      })
+    },
+    async (argv) => {
+      const template = await fsp.readFile(
+        join(__dirname, "..", "templates", id),
+        { encoding: "utf8" }
+      )
+      const file = template.replace(new RegExp(`{{ ${arg} }}`, "g"), argv[arg])
+      const path = join(process.cwd(), id + "s", argv[arg])
+      if (fs.existsSync(path)) return console.error(id + " already exists")
+      await fsp.writeFile(path + ".ts", file)
+      console.log("done")
+    },
+  ]
+}
