@@ -7,24 +7,39 @@ const fsp = require("fs/promises")
 const chalk = require("chalk")
 const yargs = require("yargs/yargs")
 const helpers = require("yargs/helpers")
+const Discord = require("discord.js")
 
 yargs(helpers.hideBin(process.argv))
   .scriptName("make")
-  .usage("$0 <cmd> [args]")
+  .usage("$0 <cmd> [args] --options")
   .command(
     "bot [name] [path]",
     "create typescript bot",
-    (yargs) => {
-      yargs.positional("name", {
+    (yargs) => yargs
+      .positional("name", {
         default: "bot.ts",
         describe: "bot name",
       })
-      yargs.positional("path", {
+      .positional("path", {
         default: ".",
         describe: "bot path",
       })
-    },
-    async ({ name, path }) => {
+      .option("prefix", {
+        alias: "p",
+        default: ".",
+        describe: "bot prefix"
+      })
+      .option("token", {
+        alias: "t",
+        describe: "bot token"
+      })
+      .option("owner", {
+        alias: "u",
+        describe: "your Discord id",
+      })
+    ,
+    async ({ name, path, prefix, token, owner }) => {
+      console.time("duration")
       const root = join(process.cwd(), path, name)
       await exec(
         `git clone https://github.com/CamilleAbella/bot.ts.git ${root}`
@@ -36,8 +51,33 @@ yargs(helpers.hideBin(process.argv))
         JSON.stringify(conf, null, 2)
       )
 
+      let env = await fsp.readFile(join(root, "template.env"), { encoding: "utf8" })
+      if(prefix) {
+        env = env.replace("{{ prefix }}", prefix)
+      }
+      let client
+      if(token) {
+        try{
+          client = new Discord.Client()
+          await client.login(token)
+        }catch (error){
+          return console.error(chalk.red(`Invalid token given.`))
+        }
+        env = env.replace("{{ token }}", token)
+      }
+      if(token && !owner) {
+        const app = await client.fetchApplication()
+        env = env.replace("{{ owner }}", app.owner instanceof Discord.User ? app.owner.id : app.owner.ownerID)
+      }else if(owner) {
+        env = env.replace("{{ owner }}", owner)
+      }
+      await fsp.writeFile(join(root, ".env"), env)
+
+      client.destroy()
+
       console.log(chalk.green(`${name} bot has been created.`))
       console.log(chalk.cyanBright(`=> ${root}`))
+      console.timeEnd("duration")
       console.group("\nhow to start ?")
       console.log(chalk.white(`\n$ cd ${chalk.blueBright(name)}\n$ npm i`))
       console.groupEnd()
@@ -60,6 +100,7 @@ function makeFile(id, arg, choices) {
       })
     },
     async (argv) => {
+      console.time("duration")
       let conf = null
       try {
         conf = require(join(process.cwd(), "package.json"))
@@ -98,6 +139,7 @@ function makeFile(id, arg, choices) {
 
       console.log(chalk.green(`${argv[arg]} ${id} has been created.`))
       console.log(chalk.cyanBright(`=> ${path}`))
+      console.timeEnd("duration")
     },
   ]
 }
