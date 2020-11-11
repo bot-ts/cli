@@ -37,9 +37,9 @@ yargs(helpers.hideBin(process.argv))
       )
 
       console.log(chalk.green(`${name} bot has been created.`))
-      console.info(chalk.blackBright(`=> ${root}`))
+      console.log(chalk.cyanBright(`=> ${root}`))
       console.group("\nhow to start ?")
-      console.log(`\ncd ${name}\nnpm i`)
+      console.log(chalk.white(`\n$ cd ${chalk.blueBright(name)}\n$ npm i`))
       console.groupEnd()
       console.log("\nthen, create your /.env file from /template.env.")
     }
@@ -59,8 +59,15 @@ function makeFile(id, arg) {
       })
     },
     async (argv) => {
-      const conf = require(join(process.cwd(), "package.json"))
-      if (!conf.devDependencies.hasOwnProperty("make-bot.ts")) {
+      let conf = null
+      try {
+        conf = require(join(process.cwd(), "package.json"))
+      } catch (e) {}
+      if (
+        !conf ||
+        !conf.hasOwnProperty("devDependencies") ||
+        !conf.devDependencies.hasOwnProperty("make-bot.ts")
+      ) {
         return console.error(
           chalk.red(
             'you should only use this command at the root of a "bot.ts" project'
@@ -72,13 +79,24 @@ function makeFile(id, arg) {
         { encoding: "utf8" }
       )
       const file = template.replace(new RegExp(`{{ ${arg} }}`, "g"), argv[arg])
-      const path = join(process.cwd(), "src", id + "s", argv[arg] + ".ts")
+
+      const directory = join(process.cwd(), "src", id + "s")
+      if (!fs.existsSync(directory)) {
+        console.warn(`${id}s directory not exists.`)
+        await fsp.mkdir(directory, { recursive: true })
+
+        console.log(chalk.green(`${id}s directory created.`))
+        console.log(chalk.cyanBright(`=> ${directory}`))
+      }
+
+      const path = join(directory, argv[arg] + ".ts")
       if (fs.existsSync(path))
         return console.error(chalk.red(`${argv[arg]} ${id} already exists.`))
+
       await fsp.writeFile(path, file)
 
       console.log(chalk.green(`${argv[arg]} ${id} has been created.`))
-      console.info(chalk.blackBright(`=> ${path}`))
+      console.log(chalk.cyanBright(`=> ${path}`))
     },
   ]
 }
