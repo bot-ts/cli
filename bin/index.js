@@ -15,29 +15,29 @@ yargs(helpers.hideBin(process.argv))
   .command(
     "bot [name] [path]",
     "create typescript bot",
-    (yargs) => yargs
-      .positional("name", {
-        default: "bot.ts",
-        describe: "bot name",
-      })
-      .positional("path", {
-        default: ".",
-        describe: "bot path",
-      })
-      .option("prefix", {
-        alias: "p",
-        default: ".",
-        describe: "bot prefix"
-      })
-      .option("token", {
-        alias: "t",
-        describe: "bot token"
-      })
-      .option("owner", {
-        alias: "u",
-        describe: "your Discord id",
-      })
-    ,
+    (yargs) =>
+      yargs
+        .positional("name", {
+          default: "bot.ts",
+          describe: "bot name",
+        })
+        .positional("path", {
+          default: ".",
+          describe: "bot path",
+        })
+        .option("prefix", {
+          alias: "p",
+          default: ".",
+          describe: "bot prefix",
+        })
+        .option("token", {
+          alias: "t",
+          describe: "bot token",
+        })
+        .option("owner", {
+          alias: "u",
+          describe: "your Discord id",
+        }),
     async ({ name, path, prefix, token, owner }) => {
       console.time("duration")
       const root = join(process.cwd(), path, name)
@@ -51,24 +51,29 @@ yargs(helpers.hideBin(process.argv))
         JSON.stringify(conf, null, 2)
       )
 
-      let env = await fsp.readFile(join(root, "template.env"), { encoding: "utf8" })
-      if(prefix) {
+      let env = await fsp.readFile(join(root, "template.env"), {
+        encoding: "utf8",
+      })
+      if (prefix) {
         env = env.replace("{{ prefix }}", prefix)
       }
       let client
-      if(token) {
-        try{
+      if (token) {
+        try {
           client = new Discord.Client()
           await client.login(token)
-        }catch (error){
+        } catch (error) {
           return console.error(chalk.red(`Invalid token given.`))
         }
         env = env.replace("{{ token }}", token)
       }
-      if(token && !owner) {
+      if (token && !owner) {
         const app = await client.fetchApplication()
-        env = env.replace("{{ owner }}", app.owner instanceof Discord.User ? app.owner.id : app.owner.ownerID)
-      }else if(owner) {
+        env = env.replace(
+          "{{ owner }}",
+          app.owner instanceof Discord.User ? app.owner.id : app.owner.ownerID
+        )
+      } else if (owner) {
         env = env.replace("{{ owner }}", owner)
       }
       await fsp.writeFile(join(root, ".env"), env)
@@ -81,7 +86,11 @@ yargs(helpers.hideBin(process.argv))
       console.group("\nhow to start ?")
       console.log(chalk.white(`\n$ cd ${chalk.blueBright(name)}\n$ npm i`))
       console.groupEnd()
-      console.log(`\nthen, create your ${chalk.blueBright(".env")} file from ${chalk.blueBright("template.env")}.`)
+      console.log(
+        `\nthen, create your ${chalk.blueBright(
+          ".env"
+        )} file from ${chalk.blueBright("template.env")}.`
+      )
     }
   )
   .command(...makeFile("command", "name"))
@@ -96,7 +105,7 @@ function makeFile(id, arg, choices) {
       yargs.positional(arg, {
         default: "message",
         describe: id + " " + arg,
-        choices
+        choices,
       })
     },
     async (argv) => {
