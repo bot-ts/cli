@@ -1,10 +1,10 @@
 {
   "name": "make-bot.ts",
   "version": "1.0.0",
-  "description": "",
+  "description": "Make CLI for CamilleAbella/bot.ts template",
   "main": "bin/index.js",
   "scripts": {
-    "prettier": "prettier --write src"
+    "prettier": "prettier --write bin"
   },
   "prettier": {
     "semi": false
@@ -30,6 +30,10 @@
     "make": "./bin/index.js"
   },
   "devDependencies": {
+    "@types/yargs": "^15.0.9",
     "prettier": "^2.1.2"
+  },
+  "dependencies": {
+    "yargs": "^16.1.0"
   }
 }
