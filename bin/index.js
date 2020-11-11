@@ -41,7 +41,7 @@ yargs(helpers.hideBin(process.argv))
       console.group("\nhow to start ?")
       console.log(chalk.white(`\n$ cd ${chalk.blueBright(name)}\n$ npm i`))
       console.groupEnd()
-      console.log("\nthen, create your /.env file from /template.env.")
+      console.log(`\nthen, create your ${chalk.blueBright(".env")} file from ${chalk.blueBright("template.env")}.`)
     }
   )
   .command(...makeFile("command", "name"))
@@ -54,6 +54,7 @@ function makeFile(id, arg, choices) {
     "create bot " + id,
     (yargs) => {
       yargs.positional(arg, {
+        default: "message",
         describe: id + " " + arg,
         choices
       })
