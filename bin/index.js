@@ -73,28 +73,33 @@ yargs(helpers.hideBin(process.argv))
           "{{ owner }}",
           app.owner instanceof Discord.User ? app.owner.id : app.owner.ownerID
         )
+        client.destroy()
       } else if (owner) {
         env = env.replace("{{ owner }}", owner)
       }
       await fsp.writeFile(join(root, ".env"), env)
 
-      client.destroy()
-
       console.log(chalk.green(`${name} bot has been created.`))
       console.log(chalk.cyanBright(`=> ${root}`))
       console.timeEnd("duration")
       console.log(
-        `\ncheck the validity of the ${chalk.blueBright(
-          ".env"
-        )} information.`
+        `\ncheck the validity of the ${chalk.blueBright(".env")} information.`
       )
       console.group("\ngetting started:\n")
       console.log(`$ cd ${chalk.blueBright(name)}`)
       console.log("$ npm i")
       console.log("$ make command helloworld")
       console.log("$ make listener guildMemberAdd")
-      console.log(`$ npm run watch ${chalk.grey("# for watch typescript and reload " + name)}`)
-      console.log(`$ npm run start ${chalk.grey("# for build typescript and start " + name)}`)
+      console.log(
+        `$ npm run watch ${chalk.grey(
+          "# for watch typescript and reload " + name
+        )}`
+      )
+      console.log(
+        `$ npm run start ${chalk.grey(
+          "# for build typescript and start " + name
+        )}`
+      )
       console.log(`$ node . ${chalk.grey("# for simply start " + name)}`)
       console.groupEnd()
       console.log("\n" + chalk.green("Enjoy!"))
