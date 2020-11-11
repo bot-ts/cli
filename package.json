@@ -1,0 +1,35 @@
+{
+  "name": "make-bot.ts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bin/index.js",
+  "scripts": {
+    "prettier": "prettier --write src"
+  },
+  "prettier": {
+    "semi": false
+  },
+  "keywords": [
+    "bot.ts",
+    "discord",
+    "bot",
+    "typescript",
+    "cli"
+  ],
+  "author": "ghom",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CamilleAbella/make-bot.ts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/CamilleAbella/make-bot.ts/issues"
+  },
+  "homepage": "https://github.com/CamilleAbella/make-bot.ts#readme",
+  "bin": {
+    "make": "./bin/index.js"
+  },
+  "devDependencies": {
+    "prettier": "^2.1.2"
+  }
+}
