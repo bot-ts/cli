@@ -1,6 +1,6 @@
 {
   "name": "make-bot.ts",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Make CLI for CamilleAbella/bot.ts template",
   "main": "bin/index.js",
   "scripts": {
