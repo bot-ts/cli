@@ -83,14 +83,21 @@ yargs(helpers.hideBin(process.argv))
       console.log(chalk.green(`${name} bot has been created.`))
       console.log(chalk.cyanBright(`=> ${root}`))
       console.timeEnd("duration")
-      console.group("\nhow to start ?")
-      console.log(chalk.white(`\n$ cd ${chalk.blueBright(name)}\n$ npm i`))
-      console.groupEnd()
       console.log(
-        `\nthen, create your ${chalk.blueBright(
+        `\ncheck the validity of the ${chalk.blueBright(
           ".env"
-        )} file from ${chalk.blueBright("template.env")}.`
+        )} information.`
       )
+      console.group("\ngetting started:\n")
+      console.log(`$ cd ${chalk.blueBright(name)}`)
+      console.log("$ npm i")
+      console.log("$ make command helloworld")
+      console.log("$ make listener guildMemberAdd")
+      console.log(`$ npm run watch ${chalk.grey("# for watch typescript and reload " + name)}`)
+      console.log(`$ npm run start ${chalk.grey("# for build typescript and start " + name)}`)
+      console.log(`$ node . ${chalk.grey("# for simply start " + name)}`)
+      console.groupEnd()
+      console.log("\n" + chalk.green("Enjoy!"))
     }
   )
   .command(...makeFile("command", "name"))
