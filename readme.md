@@ -30,7 +30,7 @@ Options:
   -u, --owner    your Discord id
 ```
 
-## recommendation for best project boostraping
+## recommendation for best project bootstraping
 
 ```
 $ npm i -g make-bot.ts@latest
