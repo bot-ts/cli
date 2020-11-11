@@ -7,8 +7,6 @@ const fsp = require("fs/promises")
 const yargs = require("yargs/yargs")
 const helpers = require("yargs/helpers")
 
-console.log("it works!")
-
 yargs(helpers.hideBin(process.argv))
   .scriptName("make")
   .usage("$0 <cmd> [args]")
