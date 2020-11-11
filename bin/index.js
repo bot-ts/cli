@@ -45,17 +45,17 @@ yargs(helpers.hideBin(process.argv))
     }
   )
   .command(...makeFile("command", "name"))
-  .command(...makeFile("listener", "event"))
+  .command(...makeFile("listener", "event", require("../events.json")))
   .help().argv
 
-function makeFile(id, arg) {
+function makeFile(id, arg, choices) {
   return [
     `${id} [${arg}]`,
     "create bot " + id,
     (yargs) => {
       yargs.positional(arg, {
-        default: arg,
         describe: id + " " + arg,
+        choices
       })
     },
     async (argv) => {
