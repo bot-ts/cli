@@ -9,8 +9,8 @@ Commands:
   make listener [event]   // create bot listener
 
 Options:
-  --version  Show version number
-  --help     Show help
+  --version  // Show version number
+  --help     // Show help
 ```
 
 ## make bot \[name] \[path]
@@ -23,13 +23,13 @@ Positionals:
   path  // bot path
 
 Options:
-      --help     Show help
-  -p, --prefix   bot prefix
-  -t, --token    bot token
-  -u, --owner    your Discord id
+      --help     // Show help
+  -p, --prefix   // bot prefix
+  -t, --token    // bot token (recommended)
+  -u, --owner    // your Discord id
 ```
 
-## recommendation for best project bootstraping
+## recommendation for best project bootstrapping
 
 ```
 $ npm i -g make-bot.ts@latest

@@ -5,6 +5,7 @@ const join = require("path").join
 const fs = require("fs")
 const fsp = require("fs/promises")
 const chalk = require("chalk")
+const boxen = require("boxen")
 const yargs = require("yargs/yargs")
 const helpers = require("yargs/helpers")
 const Discord = require("discord.js")
@@ -81,27 +82,45 @@ yargs(helpers.hideBin(process.argv))
       }
       await fsp.writeFile(join(root, ".env"), env)
 
-      console.log(chalk.green(`${name} bot has been created.`))
+      console.group()
+      console.log(`$ cd ${chalk.blueBright(name)}`)
+      console.log("$ npm i\n")
+
+      console.log(chalk.grey("# to quickly create a command or a listener"))
+      console.log("$ make command [name]\n")
+      console.log("$ make listener [ClientEvent]\n")
+
+      console.log(chalk.grey("# to watch typescript and reload " + name))
+      console.log("$ npm run watch\n")
+
+      console.log(chalk.grey("# to build typescript and start " + name))
+      console.log("$ npm run start\n")
+
+      console.log(chalk.grey("# to simply start " + name))
+      console.log(`$ node .\n`)
+
+      console.log(chalk.grey("# format your files with prettier"))
+      console.log(`$ npm run prettier\n`)
+      console.groupEnd()
+
+      console.log(chalk.green(`\n${name} bot has been created.`))
       console.log(chalk.cyanBright(`=> ${root}`))
       console.timeEnd("duration")
       console.warn(
-        `\ncheck the validity of the ${chalk.blueBright(".env")} information.`
+        chalk.yellow(
+          `\n> check the validity of the ${chalk.blueBright(
+            ".env"
+          )} information. <\n`
+        )
       )
-      console.group("\ngetting started:\n")
-      console.log(`$ cd ${chalk.blueBright(name)}`)
-      console.log("$ npm i\n")
-      console.log("$ make command [name]\n")
-      console.log("$ make listener [ClientEvent]\n")
-      console.info("# for watch typescript and reload " + name)
-      console.log("$ npm run watch\n")
-      console.info("# for build typescript and start " + name)
-      console.log("$ npm run start\n")
-      console.info("# for simply start " + name)
-      console.log(`$ node .\n`)
-      console.info("# format your files with prettier")
-      console.log(`$ npm run prettier\n`)
-      console.groupEnd()
-      console.log("\n" + chalk.green("Enjoy!") + "\n")
+      console.log(
+        boxen(chalk.green("Enjoy!"), {
+          borderStyle: "round",
+          borderColor: "yellow",
+          float: "center",
+          padding: 1,
+        })
+      )
     }
   )
   .command(...makeFile("command", "name"))
@@ -195,7 +214,7 @@ function makeFile(id, arg) {
 
       await fsp.writeFile(path, file)
 
-      console.log(chalk.green(`${argv[arg]} ${id} has been created.`))
+      console.log(chalk.green(`\n${argv[arg]} ${id} has been created.`))
       console.log(chalk.cyanBright(`=> ${path}`))
       console.timeEnd("duration")
     },
