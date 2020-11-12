@@ -8,6 +8,8 @@ const chalk = require("chalk")
 const yargs = require("yargs/yargs")
 const helpers = require("yargs/helpers")
 const Discord = require("discord.js")
+const events = require("../events.json")
+const ss = require("string-similarity")
 
 yargs(helpers.hideBin(process.argv))
   .scriptName("make")
@@ -82,46 +84,72 @@ yargs(helpers.hideBin(process.argv))
       console.log(chalk.green(`${name} bot has been created.`))
       console.log(chalk.cyanBright(`=> ${root}`))
       console.timeEnd("duration")
-      console.log(
+      console.warn(
         `\ncheck the validity of the ${chalk.blueBright(".env")} information.`
       )
       console.group("\ngetting started:\n")
       console.log(`$ cd ${chalk.blueBright(name)}`)
-      console.log("$ npm i")
-      console.log("$ make command helloworld")
-      console.log("$ make listener guildMemberAdd")
-      console.log(
-        `$ npm run watch ${chalk.grey(
-          "# for watch typescript and reload " + name
-        )}`
-      )
-      console.log(
-        `$ npm run start ${chalk.grey(
-          "# for build typescript and start " + name
-        )}`
-      )
-      console.log(`$ node . ${chalk.grey("# for simply start " + name)}`)
+      console.log("$ npm i\n")
+      console.log("$ make command [name]\n")
+      console.log("$ make listener [ClientEvent]\n")
+      console.info("# for watch typescript and reload " + name)
+      console.log("$ npm run watch\n")
+      console.info("# for build typescript and start " + name)
+      console.log("$ npm run start\n")
+      console.info("# for simply start " + name)
+      console.log(`$ node .\n`)
+      console.info("# format your files with prettier")
+      console.log(`$ npm run prettier\n`)
       console.groupEnd()
-      console.log("\n" + chalk.green("Enjoy!"))
+      console.log("\n" + chalk.green("Enjoy!") + "\n")
     }
   )
   .command(...makeFile("command", "name"))
-  .command(...makeFile("listener", "event", require("../events.json")))
+  .command(...makeFile("listener", "event"))
   .help().argv
 
-function makeFile(id, arg, choices) {
+function makeFile(id, arg) {
   return [
     `${id} [${arg}]`,
     "create bot " + id,
     (yargs) => {
       yargs.positional(arg, {
-        default: "message",
         describe: id + " " + arg,
-        choices,
       })
     },
     async (argv) => {
       console.time("duration")
+
+      if (arg === "event") {
+        if (!argv[arg]) {
+          return console.error(
+            chalk.red("you should give a Discord Client event name.")
+          )
+        }
+
+        const event = Object.keys(events).find(
+          (key) => key.toLowerCase() === argv[arg].toLowerCase()
+        )
+
+        if (event) {
+          argv[arg] = event
+        } else {
+          console.error(
+            chalk.red("you should give a valid Discord Client event name.")
+          )
+          for (const event of Object.keys(events)) {
+            const similarity = ss.compareTwoStrings(
+              event.toLowerCase(),
+              argv[arg].toLowerCase()
+            )
+            if (similarity > 0.75) {
+              console.log(`Did you mean ${chalk.cyanBright(event)} instead?`)
+            }
+          }
+          return
+        }
+      }
+
       let conf = null
       try {
         conf = require(join(process.cwd(), "package.json"))
@@ -137,13 +165,22 @@ function makeFile(id, arg, choices) {
           )
         )
       }
+
       const template = await fsp.readFile(
         join(__dirname, "..", "templates", id),
         { encoding: "utf8" }
       )
-      const file = template.replace(new RegExp(`{{ ${arg} }}`, "g"), argv[arg])
+
+      let file = template.replace(new RegExp(`{{ ${arg} }}`, "g"), argv[arg])
+
+      if (arg === "event") {
+        let args = events[argv[arg]]
+        args = typeof args === "string" ? args : args.join(", ")
+        file = file.replace(`{{ args }}`, args)
+      }
 
       const directory = join(process.cwd(), "src", id + "s")
+
       if (!fs.existsSync(directory)) {
         console.warn(`${id}s directory not exists.`)
         await fsp.mkdir(directory, { recursive: true })

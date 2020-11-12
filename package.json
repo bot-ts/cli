@@ -1,10 +1,10 @@
 {
   "name": "make-bot.ts",
-  "version": "1.0.14-beta",
-  "description": "Make CLI for CamilleAbella/bot.ts template",
+  "version": "1.0.15-beta",
+  "description": "CLI for make Discord bots in TypeScript quickly.",
   "main": "bin/index.js",
   "scripts": {
-    "prettier": "prettier --write bin"
+    "prettier": "prettier --write bin events.json"
   },
   "prettier": {
     "semi": false
@@ -37,6 +37,7 @@
   "dependencies": {
     "chalk": "^4.1.0",
     "discord.js": "^12.4.1",
+    "string-similarity": "^4.0.3",
     "yargs": "^16.1.0"
   }
 }

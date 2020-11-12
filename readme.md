@@ -4,13 +4,13 @@ CLI for make Discord bots in TypeScript quickly using [CamilleAbella/bot.ts](htt
 
 ```
 Commands:
-  make bot [name] [path]  create typescript bot
-  make command [name]     create bot command
-  make listener [event]   create bot listener
+  make bot [name] [path]  // create typescript bot
+  make command [name]     // create bot command
+  make listener [event]   // create bot listener
 
 Options:
-  --version  Show version number                                       [boolean]
-  --help     Show help                                                 [boolean]
+  --version  Show version number
+  --help     Show help
 ```
 
 ## make bot \[name] \[path]
@@ -19,13 +19,12 @@ create typescript bot and generate config files
 
 ```
 Positionals:
-  name  bot name                                             [default: "bot.ts"]
-  path  bot path                                                  [default: "."]
+  name  // bot name
+  path  // bot path
 
 Options:
-      --version  Show version number                                   [boolean]
-      --help     Show help                                             [boolean]
-  -p, --prefix   bot prefix                                       [default: "."]
+      --help     Show help
+  -p, --prefix   bot prefix
   -t, --token    bot token
   -u, --owner    your Discord id
 ```

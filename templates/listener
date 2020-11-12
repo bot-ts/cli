@@ -2,7 +2,7 @@ import * as app from "../app"
 
 const listener: app.Listener<"{{ event }}"> = {
   event: "{{ event }}",
-  async call() {
+  async call({{ args }}) {
     // todo: code here
   }
 }
