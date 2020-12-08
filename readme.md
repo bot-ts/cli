@@ -14,36 +14,33 @@ make bot "NAME" --token "TOKEN"
 # move to your bot directory
 cd "NAME"
 
+# replace remote
+git remote remove origin
+git remote add origin "YOUR REMOTE LINK"
 
-npm i
+# make your first command
+make command "NAME"
 
+# run your bot
+npm run start
 ```
 
-## Documentation
+## Commands
 
 ```
-Commands:
-  make bot [name] [path]  // create typescript bot
-  make command [name]     // create bot command
-  make listener [event]   // create bot listener
-
-Options:
-  --version  // Show version number
-  --help     // Show help
+make bot [name] [path]  // create typescript bot
+make command [name]     // create bot command
+make listener [event]   // create bot listener
 ```
 
 ## make bot \[name] \[path]
 
 create typescript bot and generate config files
 
-```
-Positionals:
-  name  // bot name
-  path  // bot path
+### options:
 
-Options:
-      --help     // Show help
-  -p, --prefix   // bot prefix
-  -t, --token    // bot token (recommended)
-  -o, --owner    // your Discord id
+```
+-p, --prefix   // bot prefix
+-t, --token    // bot token (recommended)
+-o, --owner    // your Discord id
 ```
