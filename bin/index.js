@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-const exec = require("util").promisify(require("child_process").exec)
+const cp = require("child_process")
+const exec = require("util").promisify(cp.exec)
 const join = require("path").join
 const fs = require("fs")
 const fsp = require("fs/promises")
@@ -38,7 +39,7 @@ yargs(helpers.hideBin(process.argv))
           describe: "bot token",
         })
         .option("owner", {
-          alias: "u",
+          alias: "o",
           describe: "your Discord id",
         }),
     async ({ name, path, prefix, token, owner }) => {
@@ -54,9 +55,7 @@ yargs(helpers.hideBin(process.argv))
         JSON.stringify(conf, null, 2)
       )
 
-      let env = await fsp.readFile(join(root, "template.env"), {
-        encoding: "utf8",
-      })
+      let env = await fsp.readFile(join(root, "template.env"), "utf8")
       if (prefix) {
         env = env.replace("{{ prefix }}", prefix)
       }
@@ -82,10 +81,14 @@ yargs(helpers.hideBin(process.argv))
       }
       await fsp.writeFile(join(root, ".env"), env)
 
-      console.group()
-      console.log(`$ cd ${chalk.blueBright(name)}`)
-      console.log("$ npm i\n")
+      await new Promise((resolve, reject) => {
+        cp.exec("npm i", { cwd: root }, (err) => {
+          if (err) reject(err)
+          else resolve()
+        })
+      })
 
+      console.group()
       console.log(chalk.grey("# to quickly create a command or a listener"))
       console.log("$ make command [name]\n")
       console.log("$ make listener [ClientEvent]\n")
