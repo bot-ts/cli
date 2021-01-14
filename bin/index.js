@@ -13,6 +13,31 @@ const Discord = require("discord.js")
 const events = require("../events.json")
 const ss = require("string-similarity")
 const figlet = require("figlet")
+const loading = require("loading-cli")
+
+async function loader(start, callback, end) {
+  const time = Date.now()
+  const load = loading({
+    text: start,
+    interval: 100,
+    color: "white",
+    frames: [
+      "🕐 ",
+      "🕑 ",
+      "🕒 ",
+      "🕓 ",
+      "🕔 ",
+      "🕕 ",
+      "🕖 ",
+      "🕗 ",
+      "🕘 ",
+      "🕙 ",
+      "🕚 ",
+    ],
+  }).start()
+  await callback()
+  load.succeed(`${end} ${chalk.grey(`${Date.now() - time}ms`)}`)
+}
 
 yargs(helpers.hideBin(process.argv))
   .scriptName("make")
@@ -52,6 +77,7 @@ yargs(helpers.hideBin(process.argv))
         horizontal: " ",
         vertical: " ",
       }
+
       console.log(
         boxen(
           chalk.blueBright(
@@ -68,50 +94,69 @@ yargs(helpers.hideBin(process.argv))
           }
         )
       )
+
       console.time("duration")
+
       const root = join(process.cwd(), path, name)
-      await exec(
-        `git clone https://github.com/CamilleAbella/bot.ts.git ${root}`
-      )
-      const conf = require(join(root, "package.json"))
-      conf.name = name
-      await fsp.writeFile(
-        join(root, "package.json"),
-        JSON.stringify(conf, null, 2)
+
+      await loader(
+        "downloading",
+        () =>
+          exec(`git clone https://github.com/CamilleAbella/bot.ts.git ${root}`),
+        "downloaded"
       )
 
-      let env = await fsp.readFile(join(root, "template.env"), "utf8")
-      if (prefix) {
-        env = env.replace("{{ prefix }}", prefix)
-      }
-      let client
-      if (token) {
-        try {
-          client = new Discord.Client()
-          await client.login(token)
-        } catch (error) {
-          return console.error(chalk.red(`Invalid token given.`))
-        }
-        env = env.replace("{{ token }}", token)
-      }
-      if (token && !owner) {
-        const app = await client.fetchApplication()
-        env = env.replace(
-          "{{ owner }}",
-          app.owner instanceof Discord.User ? app.owner.id : app.owner.ownerID
-        )
-        client.destroy()
-      } else if (owner) {
-        env = env.replace("{{ owner }}", owner)
-      }
-      await fsp.writeFile(join(root, ".env"), env)
+      await loader(
+        "initializing",
+        async () => {
+          const conf = require(join(root, "package.json"))
+          conf.name = name
+          await fsp.writeFile(
+            join(root, "package.json"),
+            JSON.stringify(conf, null, 2)
+          )
+          let env = await fsp.readFile(join(root, "template.env"), "utf8")
+          if (prefix) {
+            env = env.replace("{{ prefix }}", prefix)
+          }
+          let client
+          if (token) {
+            try {
+              client = new Discord.Client()
+              await client.login(token)
+            } catch (error) {
+              return console.error(chalk.red(`Invalid token given.`))
+            }
+            env = env.replace("{{ token }}", token)
+          }
+          if (token && !owner) {
+            const app = await client.fetchApplication()
+            env = env.replace(
+              "{{ owner }}",
+              app.owner instanceof Discord.User
+                ? app.owner.id
+                : app.owner.ownerID
+            )
+            client.destroy()
+          } else if (owner) {
+            env = env.replace("{{ owner }}", owner)
+          }
+          await fsp.writeFile(join(root, ".env"), env)
+        },
+        "initialized"
+      )
 
-      await new Promise((resolve, reject) => {
-        cp.exec("npm i", { cwd: root }, (err) => {
-          if (err) reject(err)
-          else resolve()
-        })
-      })
+      await loader(
+        "installing",
+        () =>
+          new Promise((resolve, reject) => {
+            cp.exec("npm i", { cwd: root }, (err) => {
+              if (err) reject(err)
+              else resolve()
+            })
+          }),
+        "installed"
+      )
 
       const $ = chalk.grey("$")
 
@@ -124,7 +169,7 @@ yargs(helpers.hideBin(process.argv))
             $ + " make listener [ClientEvent]",
             "",
             chalk.grey("# to watch typescript and reload " + name),
-            $ + "npm run watch",
+            $ + " npm run watch",
             "",
             chalk.grey("# to build typescript and start " + name),
             $ + " npm run start",
