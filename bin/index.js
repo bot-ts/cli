@@ -44,6 +44,14 @@ yargs(helpers.hideBin(process.argv))
           describe: "your Discord id",
         }),
     async ({ name, path, prefix, token, owner }) => {
+      const borderNone = {
+        topLeft: " ",
+        topRight: " ",
+        bottomLeft: " ",
+        bottomRight: " ",
+        horizontal: " ",
+        vertical: " ",
+      }
       console.log(
         boxen(
           chalk.blueBright(
@@ -56,6 +64,7 @@ yargs(helpers.hideBin(process.argv))
           ),
           {
             float: "center",
+            borderStyle: borderNone,
           }
         )
       )
@@ -129,6 +138,7 @@ yargs(helpers.hideBin(process.argv))
           ].join("\n"),
           {
             float: "center",
+            borderStyle: borderNone,
           }
         )
       )
