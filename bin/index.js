@@ -21,19 +21,7 @@ async function loader(start, callback, end) {
     text: start,
     interval: 100,
     color: "white",
-    frames: [
-      "🕐 ",
-      "🕑 ",
-      "🕒 ",
-      "🕓 ",
-      "🕔 ",
-      "🕕 ",
-      "🕖 ",
-      "🕗 ",
-      "🕘 ",
-      "🕙 ",
-      "🕚 ",
-    ],
+    frames: ["◐", "◓", "◑", "◒"],
   }).start()
   await callback()
   load.succeed(`${end} ${chalk.grey(`${Date.now() - time}ms`)}`)
@@ -158,6 +146,10 @@ yargs(helpers.hideBin(process.argv))
         "installed"
       )
 
+      console.log(chalk.green(`\n${name} bot has been created.`))
+      console.log(chalk.cyanBright(`=> ${root}`))
+      console.timeEnd("duration")
+
       const $ = chalk.grey("$")
 
       console.log(
@@ -188,29 +180,18 @@ yargs(helpers.hideBin(process.argv))
         )
       )
 
-      console.log(chalk.green(`\n${name} bot has been created.`))
-      console.log(chalk.cyanBright(`=> ${root}`))
-      console.timeEnd("duration")
-      console.warn(
+      console.log(
         boxen(
-          chalk.yellow(
-            `\n> check the validity of the ${chalk.blueBright(
-              ".env"
-            )} information. <\n`
-          ),
+          `Check the validity of the ${chalk.blueBright(
+            ".env"
+          )} information. ${chalk.green("Enjoy!")}`,
           {
-            align: "center",
-            borderStyle: borderNone,
+            borderStyle: "round",
+            borderColor: "yellow",
+            float: "center",
+            padding: 1,
           }
         )
-      )
-      console.log(
-        boxen(chalk.green("Enjoy!"), {
-          borderStyle: "round",
-          borderColor: "yellow",
-          float: "center",
-          padding: 1,
-        })
       )
     }
   )
