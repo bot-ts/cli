@@ -147,10 +147,16 @@ yargs(helpers.hideBin(process.argv))
       console.log(chalk.cyanBright(`=> ${root}`))
       console.timeEnd("duration")
       console.warn(
-        chalk.yellow(
-          `\n> check the validity of the ${chalk.blueBright(
-            ".env"
-          )} information. <\n`
+        boxen(
+          chalk.yellow(
+            `\n> check the validity of the ${chalk.blueBright(
+              ".env"
+            )} information. <\n`
+          ),
+          {
+            align: "center",
+            borderStyle: borderNone,
+          }
         )
       )
       console.log(
