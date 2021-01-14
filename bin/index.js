@@ -12,6 +12,7 @@ const helpers = require("yargs/helpers")
 const Discord = require("discord.js")
 const events = require("../events.json")
 const ss = require("string-similarity")
+const figlet = require("figlet")
 
 yargs(helpers.hideBin(process.argv))
   .scriptName("make")
@@ -43,6 +44,21 @@ yargs(helpers.hideBin(process.argv))
           describe: "your Discord id",
         }),
     async ({ name, path, prefix, token, owner }) => {
+      console.log(
+        boxen(
+          chalk.blueBright(
+            await new Promise((resolve) =>
+              figlet("bot.ts", (err, value) => {
+                if (err) resolve("")
+                else resolve(value)
+              })
+            )
+          ),
+          {
+            float: "center",
+          }
+        )
+      )
       console.time("duration")
       const root = join(process.cwd(), path, name)
       await exec(
@@ -88,23 +104,34 @@ yargs(helpers.hideBin(process.argv))
         })
       })
 
-      console.group()
-      console.log(chalk.grey("# to quickly create a command or a listener"))
-      console.log("$ make command [name]\n")
-      console.log("$ make listener [ClientEvent]\n")
+      const $ = chalk.grey("$")
 
-      console.log(chalk.grey("# to watch typescript and reload " + name))
-      console.log("$ npm run watch\n")
-
-      console.log(chalk.grey("# to build typescript and start " + name))
-      console.log("$ npm run start\n")
-
-      console.log(chalk.grey("# to simply start " + name))
-      console.log(`$ node .\n`)
-
-      console.log(chalk.grey("# format your files with prettier"))
-      console.log(`$ npm run prettier\n`)
-      console.groupEnd()
+      console.log(
+        boxen(
+          [
+            "",
+            chalk.grey("# to quickly create a command or a listener"),
+            $ + " make command [name]",
+            $ + " make listener [ClientEvent]",
+            "",
+            chalk.grey("# to watch typescript and reload " + name),
+            $ + "npm run watch",
+            "",
+            chalk.grey("# to build typescript and start " + name),
+            $ + " npm run start",
+            "",
+            chalk.grey("# to simply start " + name),
+            $ + " node .",
+            "",
+            chalk.grey("# format your files with prettier"),
+            $ + " npm run prettier",
+            "",
+          ].join("\n"),
+          {
+            float: "center",
+          }
+        )
+      )
 
       console.log(chalk.green(`\n${name} bot has been created.`))
       console.log(chalk.cyanBright(`=> ${root}`))
