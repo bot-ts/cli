@@ -19,7 +19,7 @@ async function loader(start, callback, end) {
   const time = Date.now()
   const load = loading({
     text: start,
-    interval: 100,
+    interval: 150,
     color: "white",
     frames: ["◐", "◓", "◑", "◒"],
   }).start()
@@ -48,6 +48,11 @@ yargs(helpers.hideBin(process.argv))
           default: ".",
           describe: "bot prefix",
         })
+        .option("database", {
+          alias: "d",
+          default: "ghomap",
+          describe: "used database",
+        })
         .option("token", {
           alias: "t",
           describe: "bot token",
@@ -56,7 +61,7 @@ yargs(helpers.hideBin(process.argv))
           alias: "o",
           describe: "your Discord id",
         }),
-    async ({ name, path, prefix, token, owner }) => {
+    async ({ name, path, prefix, token, database, owner }) => {
       const borderNone = {
         topLeft: " ",
         topRight: " ",
@@ -99,9 +104,11 @@ yargs(helpers.hideBin(process.argv))
         async () => {
           const conf = require(join(root, "package.json"))
           conf.name = name
+          conf.dependencies[database] = "latest"
           await fsp.writeFile(
             join(root, "package.json"),
-            JSON.stringify(conf, null, 2)
+            JSON.stringify(conf, null, 2),
+            "utf8"
           )
           let env = await fsp.readFile(join(root, "template.env"), "utf8")
           if (prefix) {
@@ -129,7 +136,16 @@ yargs(helpers.hideBin(process.argv))
           } else if (owner) {
             env = env.replace("{{ owner }}", owner)
           }
-          await fsp.writeFile(join(root, ".env"), env)
+          await fsp.writeFile(join(root, ".env"), env, "utf8")
+          const template = await fsp.readFile(
+            join(__dirname, "..", "templates", database),
+            "utf8"
+          )
+          await fsp.writeFile(
+            join(root, "src", "app", "database.ts"),
+            template,
+            "utf8"
+          )
         },
         "initialized"
       )
@@ -259,7 +275,7 @@ function makeFile(id, arg) {
 
       const template = await fsp.readFile(
         join(__dirname, "..", "templates", id),
-        { encoding: "utf8" }
+        "utf8"
       )
 
       let file = template.replace(new RegExp(`{{ ${arg} }}`, "g"), argv[arg])
@@ -284,7 +300,7 @@ function makeFile(id, arg) {
       if (fs.existsSync(path))
         return console.error(chalk.red(`${argv[arg]} ${id} already exists.`))
 
-      await fsp.writeFile(path, file)
+      await fsp.writeFile(path, file, "utf8")
 
       console.log(chalk.green(`\n${argv[arg]} ${id} has been created.`))
       console.log(chalk.cyanBright(`=> ${path}`))
