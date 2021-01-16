@@ -1,0 +1,12 @@
+import Discord from "discord.js"
+import Ghomap from "ghomap"
+
+//# Exemple with Ghomap:
+
+/** Ghomap<Prefix> */
+export const prefixes = new Ghomap<string>("prefixes")
+
+// /** Enmap<Guild, Member[]> */
+// export const muted = new Ghomap<Discord.Snowflake[]>("muted")
+
+// Docs: http://163.172.176.138:4224/
