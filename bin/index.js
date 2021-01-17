@@ -15,6 +15,8 @@ const ss = require("string-similarity")
 const figlet = require("figlet")
 const loading = require("loading-cli")
 
+const root = join(process.cwd(), path, name)
+
 async function loader(start, callback, end) {
   const time = Date.now()
   const load = loading({
@@ -25,6 +27,14 @@ async function loader(start, callback, end) {
   }).start()
   await callback()
   load.succeed(`${end} ${chalk.grey(`${Date.now() - time}ms`)}`)
+}
+
+async function setupDatabase(database) {
+  const template = await fsp.readFile(
+    join(__dirname, "..", "templates", database),
+    "utf8"
+  )
+  await fsp.writeFile(join(root, "src", "app", "database.ts"), template, "utf8")
 }
 
 yargs(helpers.hideBin(process.argv))
@@ -90,8 +100,6 @@ yargs(helpers.hideBin(process.argv))
 
       console.time("duration")
 
-      const root = join(process.cwd(), path, name)
-
       await loader(
         "downloading",
         () =>
@@ -137,15 +145,7 @@ yargs(helpers.hideBin(process.argv))
             env = env.replace("{{ owner }}", owner)
           }
           await fsp.writeFile(join(root, ".env"), env, "utf8")
-          const template = await fsp.readFile(
-            join(__dirname, "..", "templates", database),
-            "utf8"
-          )
-          await fsp.writeFile(
-            join(root, "src", "app", "database.ts"),
-            template,
-            "utf8"
-          )
+          await setupDatabase(database)
         },
         "initialized"
       )
@@ -213,6 +213,17 @@ yargs(helpers.hideBin(process.argv))
   )
   .command(...makeFile("command", "name"))
   .command(...makeFile("listener", "event"))
+  .command(
+    "database [database]",
+    "setup database",
+    (yargs) => {
+      yargs.positional("database", {
+        describe: "database name",
+        choices: ["enmap", "ghomap"],
+      })
+    },
+    ({ database }) => setupDatabase(database)
+  )
   .help().argv
 
 function makeFile(id, arg) {
