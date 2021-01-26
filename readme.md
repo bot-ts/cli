@@ -43,4 +43,6 @@ create typescript bot and generate config files
 -p, --prefix   // bot prefix
 -t, --token    // bot token (recommended)
 -o, --owner    // your Discord id
+-d, --database // database to setup (default: enmap)
+               // other databases: ghomap (more soon)
 ```

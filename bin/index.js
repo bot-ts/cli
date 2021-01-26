@@ -60,7 +60,7 @@ yargs(helpers.hideBin(process.argv))
         })
         .option("database", {
           alias: "d",
-          default: "ghomap",
+          default: "enmap",
           describe: "used database",
         })
         .option("token", {
