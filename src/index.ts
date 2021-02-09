@@ -39,15 +39,19 @@ async function loader(start: string, callback: () => unknown, end: string) {
   load.succeed(`${end} ${chalk.grey(`${Date.now() - time}ms`)}`)
 }
 
-async function setupDatabase(database: string) {
-  const conf = await readJSON(root("package.json"))
+async function setupDatabase(projectPath: string, database: string) {
+  const conf = await readJSON(join(projectPath, "package.json"))
   conf.dependencies[database] = "latest"
-  await writeJSON(root("package.json"), conf)
+  await writeJSON(join(projectPath, "package.json"), conf)
   const template = await fsp.readFile(
     join(__dirname, "..", "templates", database),
     "utf8"
   )
-  await fsp.writeFile(root("src", "app", "database.ts"), template, "utf8")
+  await fsp.writeFile(
+    join(projectPath, "src", "app", "database.ts"),
+    template,
+    "utf8"
+  )
 }
 
 yargs(helpers.hideBin(process.argv))
@@ -127,13 +131,16 @@ yargs(helpers.hideBin(process.argv))
         "downloaded"
       )
 
+      const project = (...segments: string[]) =>
+        root(args.path, args.name, ...segments)
+
       await loader(
         "initializing",
         async () => {
-          const conf = await readJSON(root("package.json"))
-          await writeJSON(root("package.json"), { ...conf, name: args.name })
+          const conf = await readJSON(project("package.json"))
+          await writeJSON(project("package.json"), { ...conf, name: args.name })
 
-          let env = await fsp.readFile(root("template.env"), "utf8")
+          let env = await fsp.readFile(project("template.env"), "utf8")
           env = env.replace("{{ prefix }}", args.prefix)
 
           const client = new Discord.Client()
@@ -158,8 +165,8 @@ yargs(helpers.hideBin(process.argv))
           } else if (typeof args.owner === "string") {
             env = env.replace("{{ owner }}", args.owner)
           }
-          await fsp.writeFile(root(".env"), env, "utf8")
-          await setupDatabase(args.database)
+          await fsp.writeFile(project(".env"), env, "utf8")
+          await setupDatabase(project(), args.database)
         },
         "initialized"
       )
@@ -168,7 +175,7 @@ yargs(helpers.hideBin(process.argv))
         "installing",
         () =>
           new Promise<void>((resolve, reject) => {
-            cp.exec("npm i", { cwd: root() }, (err) => {
+            cp.exec("npm i", { cwd: project() }, (err) => {
               if (err) reject(err)
               else resolve()
             })
@@ -177,7 +184,7 @@ yargs(helpers.hideBin(process.argv))
       )
 
       console.log(chalk.green(`\n${args.name} bot has been created.`))
-      console.log(chalk.cyanBright(`=> ${root()}`))
+      console.log(chalk.cyanBright(`=> ${project()}`))
       console.timeEnd("duration")
 
       const $ = chalk.grey("$")
@@ -240,7 +247,7 @@ yargs(helpers.hideBin(process.argv))
         choices: ["enmap", "ghomap"],
       })
     },
-    (args) => setupDatabase(args.database)
+    (args) => setupDatabase(root(), args.database)
   )
   .help().argv
 
