@@ -15,7 +15,7 @@ const ss = require("string-similarity")
 const figlet = require("figlet")
 const loading = require("loading-cli")
 
-const root = join(process.cwd(), path, name)
+const root = (...segments) => join(process.cwd(), ...segments)
 
 async function loader(start, callback, end) {
   const time = Date.now()
@@ -34,7 +34,7 @@ async function setupDatabase(database) {
     join(__dirname, "..", "templates", database),
     "utf8"
   )
-  await fsp.writeFile(join(root, "src", "app", "database.ts"), template, "utf8")
+  await fsp.writeFile(root("src", "app", "database.ts"), template, "utf8")
 }
 
 yargs(helpers.hideBin(process.argv))
@@ -103,22 +103,27 @@ yargs(helpers.hideBin(process.argv))
       await loader(
         "downloading",
         () =>
-          exec(`git clone https://github.com/CamilleAbella/bot.ts.git ${root}`),
+          exec(
+            `git clone https://github.com/CamilleAbella/bot.ts.git ${root(
+              path,
+              name
+            )}`
+          ),
         "downloaded"
       )
 
       await loader(
         "initializing",
         async () => {
-          const conf = require(join(root, "package.json"))
+          const conf = require(root("package.json"))
           conf.name = name
           conf.dependencies[database] = "latest"
           await fsp.writeFile(
-            join(root, "package.json"),
+            root("package.json"),
             JSON.stringify(conf, null, 2),
             "utf8"
           )
-          let env = await fsp.readFile(join(root, "template.env"), "utf8")
+          let env = await fsp.readFile(root("template.env"), "utf8")
           if (prefix) {
             env = env.replace("{{ prefix }}", prefix)
           }
@@ -144,7 +149,7 @@ yargs(helpers.hideBin(process.argv))
           } else if (owner) {
             env = env.replace("{{ owner }}", owner)
           }
-          await fsp.writeFile(join(root, ".env"), env, "utf8")
+          await fsp.writeFile(root(".env"), env, "utf8")
           await setupDatabase(database)
         },
         "initialized"
@@ -154,7 +159,7 @@ yargs(helpers.hideBin(process.argv))
         "installing",
         () =>
           new Promise((resolve, reject) => {
-            cp.exec("npm i", { cwd: root }, (err) => {
+            cp.exec("npm i", { cwd: root() }, (err) => {
               if (err) reject(err)
               else resolve()
             })
@@ -163,7 +168,7 @@ yargs(helpers.hideBin(process.argv))
       )
 
       console.log(chalk.green(`\n${name} bot has been created.`))
-      console.log(chalk.cyanBright(`=> ${root}`))
+      console.log(chalk.cyanBright(`=> ${root()}`))
       console.timeEnd("duration")
 
       const $ = chalk.grey("$")
@@ -270,7 +275,7 @@ function makeFile(id, arg) {
 
       let conf = null
       try {
-        conf = require(join(process.cwd(), "package.json"))
+        conf = require(root("package.json"))
       } catch (e) {}
       if (
         !conf ||
@@ -297,7 +302,7 @@ function makeFile(id, arg) {
         file = file.replace(`{{ args }}`, args)
       }
 
-      const directory = join(process.cwd(), "src", id + "s")
+      const directory = root("src", id + "s")
 
       if (!fs.existsSync(directory)) {
         console.warn(`${id}s directory not exists.`)
