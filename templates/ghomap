@@ -6,9 +6,6 @@ import Ghomap from "ghomap"
 /** Ghomap<Prefix> */
 export const prefixes = new Ghomap<string>("prefixes")
 
-// /** Enmap<Guild, Member[]> */
-// export const muted = new Ghomap<Discord.Snowflake[]>("muted")
-
 export const opened = Ghomap.openAll().then(() => console.log("Ghomap database opened."))
 
 // Docs: http://163.172.176.138:4224/
