@@ -1,23 +1,33 @@
 #!/usr/bin/env node
 
-const cp = require("child_process")
-const exec = require("util").promisify(cp.exec)
-const join = require("path").join
-const fs = require("fs")
-const fsp = require("fs/promises")
-const chalk = require("chalk")
-const boxen = require("boxen")
-const yargs = require("yargs/yargs")
+import cp from "child_process"
+import util from "util"
+import fs from "fs"
+import fsp from "fs/promises"
+import chalk from "chalk"
+import boxen from "boxen"
+import yargs from "yargs/yargs"
+import Discord from "discord.js"
+import ss from "string-similarity"
+import figlet from "figlet"
+import loading from "loading-cli"
+import { join } from "path"
+
 const helpers = require("yargs/helpers")
-const Discord = require("discord.js")
 const events = require("../events.json")
-const ss = require("string-similarity")
-const figlet = require("figlet")
-const loading = require("loading-cli")
+const exec = util.promisify(cp.exec)
 
-const root = (...segments) => join(process.cwd(), ...segments)
+const root = (...segments: string[]) => join(process.cwd(), ...segments)
 
-async function loader(start, callback, end) {
+async function readJSON(path: string) {
+  return JSON.parse(await fsp.readFile(path, "utf8"))
+}
+
+async function writeJSON(path: string, json: object) {
+  await fsp.writeFile(path, JSON.stringify(json, null, 2), "utf8")
+}
+
+async function loader(start: string, callback: () => unknown, end: string) {
   const time = Date.now()
   const load = loading({
     text: start,
@@ -29,7 +39,10 @@ async function loader(start, callback, end) {
   load.succeed(`${end} ${chalk.grey(`${Date.now() - time}ms`)}`)
 }
 
-async function setupDatabase(database) {
+async function setupDatabase(database: string) {
+  const conf = await readJSON(root("package.json"))
+  conf.dependencies[database] = "latest"
+  await writeJSON(root("package.json"), conf)
   const template = await fsp.readFile(
     join(__dirname, "..", "templates", database),
     "utf8"
@@ -71,7 +84,7 @@ yargs(helpers.hideBin(process.argv))
           alias: "o",
           describe: "your Discord id",
         }),
-    async ({ name, path, prefix, token, database, owner }) => {
+    async (args) => {
       const borderNone = {
         topLeft: " ",
         topRight: " ",
@@ -81,13 +94,15 @@ yargs(helpers.hideBin(process.argv))
         vertical: " ",
       }
 
+      const warns: string[] = []
+
       console.log(
         boxen(
           chalk.blueBright(
-            await new Promise((resolve) =>
+            await new Promise<string>((resolve) =>
               figlet("bot.ts", (err, value) => {
                 if (err) resolve("")
-                else resolve(value)
+                else resolve(value as string)
               })
             )
           ),
@@ -105,8 +120,8 @@ yargs(helpers.hideBin(process.argv))
         () =>
           exec(
             `git clone https://github.com/CamilleAbella/bot.ts.git ${root(
-              path,
-              name
+              args.path,
+              args.name
             )}`
           ),
         "downloaded"
@@ -115,42 +130,36 @@ yargs(helpers.hideBin(process.argv))
       await loader(
         "initializing",
         async () => {
-          const conf = require(root("package.json"))
-          conf.name = name
-          conf.dependencies[database] = "latest"
-          await fsp.writeFile(
-            root("package.json"),
-            JSON.stringify(conf, null, 2),
-            "utf8"
-          )
+          const conf = await readJSON(root("package.json"))
+          await writeJSON(root("package.json"), { ...conf, name: args.name })
+
           let env = await fsp.readFile(root("template.env"), "utf8")
-          if (prefix) {
-            env = env.replace("{{ prefix }}", prefix)
-          }
-          let client
-          if (token) {
+          env = env.replace("{{ prefix }}", args.prefix)
+
+          const client = new Discord.Client()
+          if (typeof args.token === "string") {
             try {
-              client = new Discord.Client()
-              await client.login(token)
+              await client.login(args.token)
             } catch (error) {
               return console.error(chalk.red(`Invalid token given.`))
             }
-            env = env.replace("{{ token }}", token)
+            env = env.replace("{{ token }}", args.token)
           }
-          if (token && !owner) {
+
+          if (args.token && !args.owner) {
             const app = await client.fetchApplication()
-            env = env.replace(
-              "{{ owner }}",
+            const ownerID: string =
               app.owner instanceof Discord.User
                 ? app.owner.id
-                : app.owner.ownerID
-            )
+                : app.owner?.id ?? "none"
+            if (ownerID === "none") warns.push("failure to detect bot owner.")
+            env = env.replace("{{ owner }}", ownerID)
             client.destroy()
-          } else if (owner) {
-            env = env.replace("{{ owner }}", owner)
+          } else if (typeof args.owner === "string") {
+            env = env.replace("{{ owner }}", args.owner)
           }
           await fsp.writeFile(root(".env"), env, "utf8")
-          await setupDatabase(database)
+          await setupDatabase(args.database)
         },
         "initialized"
       )
@@ -158,7 +167,7 @@ yargs(helpers.hideBin(process.argv))
       await loader(
         "installing",
         () =>
-          new Promise((resolve, reject) => {
+          new Promise<void>((resolve, reject) => {
             cp.exec("npm i", { cwd: root() }, (err) => {
               if (err) reject(err)
               else resolve()
@@ -167,7 +176,7 @@ yargs(helpers.hideBin(process.argv))
         "installed"
       )
 
-      console.log(chalk.green(`\n${name} bot has been created.`))
+      console.log(chalk.green(`\n${args.name} bot has been created.`))
       console.log(chalk.cyanBright(`=> ${root()}`))
       console.timeEnd("duration")
 
@@ -181,13 +190,13 @@ yargs(helpers.hideBin(process.argv))
             $ + " make command [name]",
             $ + " make listener [ClientEvent]",
             "",
-            chalk.grey("# to watch typescript and reload " + name),
+            chalk.grey("# to watch typescript and reload " + args.name),
             $ + " npm run watch",
             "",
-            chalk.grey("# to build typescript and start " + name),
+            chalk.grey("# to build typescript and start " + args.name),
             $ + " npm run start",
             "",
-            chalk.grey("# to simply start " + name),
+            chalk.grey("# to simply start " + args.name),
             $ + " node .",
             "",
             chalk.grey("# format your files with prettier"),
@@ -201,13 +210,15 @@ yargs(helpers.hideBin(process.argv))
         )
       )
 
+      warns.forEach(console.warn)
+
       console.log(
         boxen(
           `Check the validity of the ${chalk.blueBright(
             ".env"
           )} information. ${chalk.green("Enjoy!")}`,
           {
-            borderStyle: "round",
+            borderStyle: boxen.BorderStyle.Round,
             borderColor: "yellow",
             float: "center",
             padding: 1,
@@ -216,7 +227,9 @@ yargs(helpers.hideBin(process.argv))
       )
     }
   )
+  // @ts-ignore
   .command(...makeFile("command", "name"))
+  // @ts-ignore
   .command(...makeFile("listener", "event"))
   .command(
     "database [database]",
@@ -227,20 +240,20 @@ yargs(helpers.hideBin(process.argv))
         choices: ["enmap", "ghomap"],
       })
     },
-    ({ database }) => setupDatabase(database)
+    (args) => setupDatabase(args.database)
   )
   .help().argv
 
-function makeFile(id, arg) {
+function makeFile(id: "command" | "listener", arg: string) {
   return [
     `${id} [${arg}]`,
     "create bot " + id,
-    (yargs) => {
+    (yargs: any) => {
       yargs.positional(arg, {
         describe: id + " " + arg,
       })
     },
-    async (argv) => {
+    async (argv: any) => {
       console.time("duration")
 
       if (arg === "event") {
