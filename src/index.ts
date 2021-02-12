@@ -247,7 +247,14 @@ yargs(helpers.hideBin(process.argv))
         choices: ["enmap", "ghomap"],
       })
     },
-    (args) => setupDatabase(root(), args.database)
+    async (args) => {
+      console.time("duration")
+      await setupDatabase(root(), args.database)
+
+      console.log(chalk.green(`\n${args.database} database has been created.`))
+      console.log(chalk.cyanBright(`=> ${root("src", "app", "database.ts")}`))
+      console.timeEnd("duration")
+    }
   )
   .help().argv
 
