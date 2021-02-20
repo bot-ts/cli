@@ -75,6 +75,11 @@ yargs(helpers.hideBin(process.argv))
           default: ".",
           describe: "bot prefix",
         })
+        .option("locale", {
+          alias: "l",
+          default: "en",
+          describe: "locale timezone",
+        })
         .option("database", {
           alias: "d",
           default: "enmap",
@@ -141,7 +146,9 @@ yargs(helpers.hideBin(process.argv))
           await writeJSON(project("package.json"), { ...conf, name: args.name })
 
           let env = await fsp.readFile(project("template.env"), "utf8")
-          env = env.replace("{{ prefix }}", args.prefix)
+          env = env
+            .replace("{{ prefix }}", args.prefix)
+            .replace("{{ locale }}", args.locale)
 
           const client = new Discord.Client()
           if (typeof args.token === "string") {
