@@ -1,6 +1,6 @@
 {
   "name": "make-bot.ts",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "CLI for make Discord bots in TypeScript quickly.",
   "main": "bin/index.js",
   "scripts": {
@@ -48,5 +48,9 @@
     "loading-cli": "^1.1.0",
     "string-similarity": "^4.0.3",
     "yargs": "^16.1.0"
+  },
+  "engines": {
+    "node": ">=14",
+    "npm": ">=7.5.2"
   }
 }
