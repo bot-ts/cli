@@ -142,7 +142,12 @@ yargs(helpers.hideBin(process.argv))
       await loader(
         "initializing",
         async () => {
-          await exec(`git rm -rf ${project("docs")}`)
+          new Promise<void>((resolve, reject) => {
+            cp.exec("git rm -rf docs", { cwd: project() }, (err) => {
+              if (err) reject(err)
+              else resolve()
+            })
+          })
 
           const conf = await readJSON(project("package.json"))
           await writeJSON(project("package.json"), { ...conf, name: args.name })
