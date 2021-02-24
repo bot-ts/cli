@@ -142,6 +142,8 @@ yargs(helpers.hideBin(process.argv))
       await loader(
         "initializing",
         async () => {
+          await exec(`git rm -rf ${project("docs")}`)
+
           const conf = await readJSON(project("package.json"))
           await writeJSON(project("package.json"), { ...conf, name: args.name })
 
@@ -174,6 +176,13 @@ yargs(helpers.hideBin(process.argv))
           }
           await fsp.writeFile(project(".env"), env, "utf8")
           await setupDatabase(project(), args.database)
+
+          await fsp.writeFile(
+            project("readme.md"),
+            `# ${
+              args.name[0].toUpperCase() + args.name.slice(1)
+            } - powered by [bot.ts](https://github.com/CamilleAbella/bot.ts)`
+          )
         },
         "initialized"
       )
