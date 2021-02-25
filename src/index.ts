@@ -128,10 +128,10 @@ yargs(helpers.hideBin(process.argv))
         "downloading",
         () =>
           exec(
-            `git clone https://github.com/CamilleAbella/bot.ts.git ${root(
+            `git clone https://github.com/CamilleAbella/bot.ts.git "${root(
               args.path,
               args.name
-            )}`
+            )}"`
           ),
         "downloaded"
       )
