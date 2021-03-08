@@ -45,6 +45,5 @@ create typescript bot and generate config files
 -t, --token    // bot token (recommended)
 -l, --locale   // targeted timezone
 -o, --owner    // your Discord id
--d, --database // database to setup (default: enmap)
-               // other databases: ghomap (more soon)
+-d, --database // database to setup (default: sqlite3)
 ```
