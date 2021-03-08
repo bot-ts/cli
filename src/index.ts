@@ -41,8 +41,15 @@ async function loader(start: string, callback: () => unknown, end: string) {
 
 async function setupDatabase(projectPath: string, database: string) {
   const conf = await readJSON(join(projectPath, "package.json"))
+
+  // delete all other database dependencies.
+  delete conf.dependencies["sqlite3"]
+
+  // add current database dependency.
   conf.dependencies[database] = "latest"
+
   await writeJSON(join(projectPath, "package.json"), conf)
+
   const template = await fsp.readFile(
     join(__dirname, "..", "templates", database),
     "utf8"
@@ -82,7 +89,7 @@ yargs(helpers.hideBin(process.argv))
         })
         .option("database", {
           alias: "d",
-          default: "enmap",
+          default: "sqlite3",
           describe: "used database",
         })
         .option("token", {
@@ -265,7 +272,7 @@ yargs(helpers.hideBin(process.argv))
     (yargs) => {
       yargs.positional("database", {
         describe: "database name",
-        choices: ["enmap", "ghomap"],
+        choices: ["sqlite3"],
       })
     },
     async (args) => {
