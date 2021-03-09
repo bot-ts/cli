@@ -53,12 +53,9 @@ async function setupDatabase(
   const conf = await readJSON(join(projectPath, "package.json"))
 
   // delete all other database dependencies.
-  delete conf.dependencies["sqlite3"]
-  delete conf.dependencies["mysql"]
-  delete conf.dependencies["pg"]
-
-  // add current database dependency.
-  conf.dependencies[database.name] = "latest"
+  for (const dbname of ["sqlite3", "mysql2", "pg"]) {
+    if (dbname !== database.name) delete conf.dependencies[dbname]
+  }
 
   await writeJSON(join(projectPath, "package.json"), conf)
 
@@ -123,7 +120,7 @@ yargs(helpers.hideBin(process.argv))
         .option("database", {
           alias: "d",
           default: "sqlite3",
-          choices: ["sqlite3", "mysql", "pg"],
+          choices: ["sqlite3", "mysql2", "pg"],
           describe: "used database",
         })
         .option("token", {
@@ -335,8 +332,8 @@ yargs(helpers.hideBin(process.argv))
     (yargs) => {
       yargs
         .positional("database", {
-          describe: "database name",
-          choices: ["sqlite3", "mysql", "pg"],
+          describe: "used database",
+          choices: ["sqlite3", "mysql2", "pg"],
         })
         .option("host", {
           alias: "h",
