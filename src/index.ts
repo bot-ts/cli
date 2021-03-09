@@ -42,7 +42,7 @@ async function loader(start: string, callback: () => unknown, end: string) {
 async function setupDatabase(
   projectPath: string,
   database: {
-    name: string
+    database: string
     host: string
     port?: string
     password?: string
@@ -54,13 +54,13 @@ async function setupDatabase(
 
   // delete all other database dependencies.
   for (const dbname of ["sqlite3", "mysql2", "pg"]) {
-    if (dbname !== database.name) delete conf.dependencies[dbname]
+    if (dbname !== database.database) delete conf.dependencies[dbname]
   }
 
   await writeJSON(join(projectPath, "package.json"), conf)
 
   const template = await fsp.readFile(
-    join(__dirname, "..", "templates", database.name),
+    join(__dirname, "..", "templates", database.database),
     "utf8"
   )
   await fsp.writeFile(
@@ -206,13 +206,6 @@ yargs(helpers.hideBin(process.argv))
       await loader(
         "initializing",
         async () => {
-          new Promise<void>((resolve, reject) => {
-            cp.exec("git rm -rf docs", { cwd: project() }, (err) => {
-              if (err) reject(err)
-              else resolve()
-            })
-          })
-
           const conf = await readJSON(project("package.json"))
           await writeJSON(project("package.json"), { ...conf, name: args.name })
 
