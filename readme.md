@@ -46,4 +46,5 @@ create typescript bot and generate config files
 -l, --locale   // targeted timezone
 -o, --owner    // your Discord id
 -d, --database // database to setup (default: sqlite3)
+               // (possible values: mysql2, pg, sqlite3)
 ```
