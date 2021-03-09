@@ -39,19 +39,31 @@ async function loader(start: string, callback: () => unknown, end: string) {
   load.succeed(`${end} ${chalk.grey(`${Date.now() - time}ms`)}`)
 }
 
-async function setupDatabase(projectPath: string, database: string) {
+async function setupDatabase(
+  projectPath: string,
+  database: {
+    name: string
+    host: string
+    port?: string
+    password?: string
+    user?: string
+    dbname?: string
+  }
+) {
   const conf = await readJSON(join(projectPath, "package.json"))
 
   // delete all other database dependencies.
   delete conf.dependencies["sqlite3"]
+  delete conf.dependencies["mysql"]
+  delete conf.dependencies["pg"]
 
   // add current database dependency.
-  conf.dependencies[database] = "latest"
+  conf.dependencies[database.name] = "latest"
 
   await writeJSON(join(projectPath, "package.json"), conf)
 
   const template = await fsp.readFile(
-    join(__dirname, "..", "templates", database),
+    join(__dirname, "..", "templates", database.name),
     "utf8"
   )
   await fsp.writeFile(
@@ -59,6 +71,27 @@ async function setupDatabase(projectPath: string, database: string) {
     template,
     "utf8"
   )
+
+  if (database.host) await injectEnvLine("HOST", database.host, projectPath)
+  if (database.port) await injectEnvLine("PORT", database.port, projectPath)
+  if (database.user) await injectEnvLine("USER", database.user, projectPath)
+  if (database.password)
+    await injectEnvLine("PASSWORD", database.password, projectPath)
+  if (database.dbname)
+    await injectEnvLine("DATABASE", database.dbname, projectPath)
+}
+
+async function injectEnvLine(
+  name: string,
+  value: string,
+  projectPath = process.cwd()
+) {
+  const env = await fsp.readFile(join(projectPath, ".env"), "utf8")
+  const lines = env.split("\n")
+  const index = lines.findIndex((line) => line.split("=")[0] === name)
+  if (index > -1) lines.splice(index, 1)
+  lines.push(`${name}="${value}"`)
+  await fsp.writeFile(join(projectPath, ".env"), lines.join("\n"), "utf8")
 }
 
 yargs(helpers.hideBin(process.argv))
@@ -90,15 +123,42 @@ yargs(helpers.hideBin(process.argv))
         .option("database", {
           alias: "d",
           default: "sqlite3",
+          choices: ["sqlite3", "mysql", "pg"],
           describe: "used database",
         })
         .option("token", {
           alias: "t",
+          type: "string",
           describe: "bot token",
         })
         .option("owner", {
           alias: "o",
+          type: "string",
           describe: "your Discord id",
+        })
+        .option("host", {
+          alias: "h",
+          default: "localhost",
+          describe: "database host",
+        })
+        .option("port", {
+          describe: "database port",
+          type: "string",
+        })
+        .option("user", {
+          alias: "u",
+          type: "string",
+          describe: "database user",
+        })
+        .option("password", {
+          alias: "pw",
+          type: "string",
+          describe: "database password",
+        })
+        .option("dbname", {
+          alias: "db",
+          type: "string",
+          describe: "database name",
         }),
     async (args) => {
       const borderNone = {
@@ -159,19 +219,19 @@ yargs(helpers.hideBin(process.argv))
           const conf = await readJSON(project("package.json"))
           await writeJSON(project("package.json"), { ...conf, name: args.name })
 
-          let env = await fsp.readFile(project("template.env"), "utf8")
-          env = env
-            .replace("{{ prefix }}", args.prefix)
-            .replace("{{ locale }}", args.locale)
+          await fsp.writeFile(project(".env"), "", "utf8")
+
+          await injectEnvLine("PREFIX", args.prefix, project())
+          await injectEnvLine("LOCALE", args.locale, project())
 
           const client = new Discord.Client()
-          if (typeof args.token === "string") {
+          if (args.token) {
             try {
               await client.login(args.token)
             } catch (error) {
               return console.error(chalk.red(`Invalid token given.`))
             }
-            env = env.replace("{{ token }}", args.token)
+            await injectEnvLine("TOKEN", args.token, project())
           }
 
           if (args.token && !args.owner) {
@@ -180,14 +240,17 @@ yargs(helpers.hideBin(process.argv))
               app.owner instanceof Discord.User
                 ? app.owner.id
                 : app.owner?.id ?? "none"
+
             if (ownerID === "none") warns.push("failure to detect bot owner.")
-            env = env.replace("{{ owner }}", ownerID)
+
+            await injectEnvLine("OWNER", ownerID, project())
+
             client.destroy()
-          } else if (typeof args.owner === "string") {
-            env = env.replace("{{ owner }}", args.owner)
+          } else if (args.owner) {
+            await injectEnvLine("OWNER", args.owner, project())
           }
-          await fsp.writeFile(project(".env"), env, "utf8")
-          await setupDatabase(project(), args.database)
+
+          await setupDatabase(project(), args)
 
           await fsp.writeFile(
             project("readme.md"),
@@ -270,14 +333,39 @@ yargs(helpers.hideBin(process.argv))
     "database [database]",
     "setup database",
     (yargs) => {
-      yargs.positional("database", {
-        describe: "database name",
-        choices: ["sqlite3"],
-      })
+      yargs
+        .positional("database", {
+          describe: "database name",
+          choices: ["sqlite3", "mysql", "pg"],
+        })
+        .option("host", {
+          alias: "h",
+          default: "localhost",
+          describe: "database host",
+        })
+        .option("port", {
+          describe: "database port",
+          type: "string",
+        })
+        .option("user", {
+          alias: "u",
+          type: "string",
+          describe: "database user",
+        })
+        .option("password", {
+          alias: "pw",
+          type: "string",
+          describe: "database password",
+        })
+        .option("dbname", {
+          alias: "db",
+          type: "string",
+          describe: "database name",
+        })
     },
     async (args) => {
       console.time("duration")
-      await setupDatabase(root(), args.database)
+      await setupDatabase(root(), args)
 
       console.log(chalk.green(`\n${args.database} database has been created.`))
       console.log(chalk.cyanBright(`=> ${root("src", "app", "database.ts")}`))
