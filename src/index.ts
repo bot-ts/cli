@@ -313,6 +313,8 @@ yargs(helpers.hideBin(process.argv))
           }
         )
       )
+
+      process.exit(0)
     }
   )
   // @ts-ignore
