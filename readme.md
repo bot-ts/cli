@@ -31,6 +31,7 @@ npm run start
 make bot [name] [path]  // create typescript bot
 make command [name]     // create bot command
 make listener [event]   // create bot listener
+make namespace [name]   // create bot namespace
 make database [type]    // init database
 ```
 
