@@ -54,7 +54,7 @@ async function setupDatabase(
 
   // delete all other database dependencies.
   for (const dbname of ["sqlite3", "mysql2", "pg"]) {
-    if (dbname !== database.database) delete conf.dependencies[dbname]
+    if (dbname !== database.database) conf.dependencies[dbname] = undefined
   }
 
   await writeJSON(join(projectPath, "package.json"), conf)
@@ -89,6 +89,26 @@ async function injectEnvLine(
   if (index > -1) lines.splice(index, 1)
   lines.push(`${name}="${value}"`)
   await fsp.writeFile(join(projectPath, ".env"), lines.join("\n"), "utf8")
+}
+
+async function isValidRoot(): Promise<boolean> {
+  let conf = null
+  try {
+    conf = require(root("package.json"))
+  } catch (e) {}
+  if (
+    !conf ||
+    !conf.hasOwnProperty("devDependencies") ||
+    !conf.devDependencies.hasOwnProperty("make-bot.ts")
+  ) {
+    console.error(
+      chalk.red(
+        'you should only use this command at the root of a "bot.ts" project'
+      )
+    )
+    return false
+  }
+  return true
 }
 
 yargs(helpers.hideBin(process.argv))
@@ -322,12 +342,13 @@ yargs(helpers.hideBin(process.argv))
   // @ts-ignore
   .command(...makeFile("listener", "event"))
   .command(
-    "database [database]",
+    "database <database>",
     "setup database",
     (yargs) => {
       yargs
         .positional("database", {
           describe: "used database",
+          type: "string",
           choices: ["sqlite3", "mysql2", "pg"],
         })
         .option("host", {
@@ -364,11 +385,50 @@ yargs(helpers.hideBin(process.argv))
       console.timeEnd("duration")
     }
   )
+  .command(
+    "namespace <name>",
+    "make a namespace",
+    (yargs) => {
+      yargs.positional("name", {
+        describe: "namespace name",
+        type: "string",
+      })
+    },
+    async (args) => {
+      console.time("duration")
+
+      if (!(await isValidRoot())) return
+
+      const namespacePath = root("src", "app", args.name + ".ts")
+
+      await fsp.writeFile(
+        namespacePath,
+        `export function getSome${
+          args.name[0].toUpperCase() + args.name.slice(1)
+        }Value(): unknown {}`,
+        "utf8"
+      )
+
+      const appFile = await fsp.readFile(root("src", "app.ts"), "utf8")
+      const appLines = appFile.split("\n")
+
+      const spaceIndex = appLines.findIndex((line) => line === "")
+
+      appLines.splice(spaceIndex, 0, `export * from "./app/${args.name}"`)
+      appLines.push(`export * as ${args.name} from "./app/${args.name}"`)
+
+      await fsp.writeFile(root("src", "app.ts"), appLines.join("\n"), "utf8")
+
+      console.log(chalk.green(`\n${args.name} namespace has been created.`))
+      console.log(chalk.cyanBright(`=> ${namespacePath}`))
+      console.timeEnd("duration")
+    }
+  )
   .help().argv
 
 function makeFile(id: "command" | "listener", arg: string) {
   return [
-    `${id} [${arg}]`,
+    `${id} <${arg}>`,
     "create bot " + id,
     (yargs: any) => {
       yargs.positional(arg, {
@@ -408,21 +468,7 @@ function makeFile(id: "command" | "listener", arg: string) {
         }
       }
 
-      let conf = null
-      try {
-        conf = require(root("package.json"))
-      } catch (e) {}
-      if (
-        !conf ||
-        !conf.hasOwnProperty("devDependencies") ||
-        !conf.devDependencies.hasOwnProperty("make-bot.ts")
-      ) {
-        return console.error(
-          chalk.red(
-            'you should only use this command at the root of a "bot.ts" project'
-          )
-        )
-      }
+      if (!(await isValidRoot())) return
 
       const template = await fsp.readFile(
         join(__dirname, "..", "templates", id),
