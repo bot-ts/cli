@@ -412,7 +412,9 @@ yargs(helpers.hideBin(process.argv))
       const appFile = await fsp.readFile(root("src", "app.ts"), "utf8")
       const appLines = appFile.split("\n")
 
-      const spaceIndex = appLines.findIndex((line) => line === "")
+      if (/^\s*$/.test(appLines[appLines.length - 1])) appLines.pop()
+
+      const spaceIndex = appLines.findIndex((line) => /^\s*$/.test(line))
 
       appLines.splice(spaceIndex, 0, `export * from "./app/${args.name}"`)
       appLines.push(`export * as ${args.name} from "./app/${args.name}"`)
