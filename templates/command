@@ -1,6 +1,6 @@
 import * as app from "../app"
 
-const command: app.Handler = {
+const command: app.Command = {
   name: "{{ name }}",
   async run(message) {
     // todo: code here
