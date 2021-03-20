@@ -32,7 +32,8 @@ make bot [name] [path]  // create typescript bot
 make command [name]     // create bot command
 make listener [event]   // create bot listener
 make namespace [name]   // create bot namespace
-make database [type]    // init database
+make table [name]       // create database table
+make database [type]    // change database type
 ```
 
 ## make bot \[name] \[path]

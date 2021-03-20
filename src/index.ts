@@ -2,7 +2,7 @@
 
 import cp from "child_process"
 import util from "util"
-import fs from "fs"
+import fs, { readFile } from "fs"
 import fsp from "fs/promises"
 import chalk from "chalk"
 import boxen from "boxen"
@@ -423,6 +423,37 @@ yargs(helpers.hideBin(process.argv))
 
       console.log(chalk.green(`\n${args.name} namespace has been created.`))
       console.log(chalk.cyanBright(`=> ${namespacePath}`))
+      console.timeEnd("duration")
+    }
+  )
+  .command(
+    "table <name>",
+    "make a database table",
+    (yargs) => {
+      yargs.positional("name", {
+        describe: "table name",
+        type: "string",
+      })
+    },
+    async (args) => {
+      console.time("duration")
+
+      if (!(await isValidRoot())) return
+
+      const tablePath = root("src", "tables", args.name + ".ts")
+
+      const template = await fsp.readFile(
+        join(__dirname, "..", "templates", "table"),
+        "utf8"
+      )
+      await fsp.writeFile(
+        tablePath,
+        template.replace(/{{ name }}/g, args.name),
+        "utf8"
+      )
+
+      console.log(chalk.green(`\n${args.name} table has been created.`))
+      console.log(chalk.cyanBright(`=> ${tablePath}`))
       console.timeEnd("duration")
     }
   )

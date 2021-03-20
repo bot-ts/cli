@@ -1,0 +1,12 @@
+import * as app from "../app"
+
+const table = new app.Table<{
+  // type of table
+}>({
+  name: "{{ name }}",
+  colMaker: (table) => {
+    // setup table colons => http://knexjs.org/#Schema-Building
+  },
+})
+
+export default table
