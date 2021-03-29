@@ -399,7 +399,7 @@ yargs(helpers.hideBin(process.argv))
 
       if (!(await isValidRoot())) return
 
-      const namespacePath = root("src", "app", args.name + ".ts")
+      const namespacePath = root("src", "namespaces", args.name + ".ts")
 
       await fsp.writeFile(
         namespacePath,
@@ -416,8 +416,12 @@ yargs(helpers.hideBin(process.argv))
 
       const spaceIndex = appLines.findIndex((line) => /^\s*$/.test(line))
 
-      appLines.splice(spaceIndex, 0, `export * from "./app/${args.name}"`)
-      appLines.push(`export * as ${args.name} from "./app/${args.name}"`)
+      appLines.splice(
+        spaceIndex,
+        0,
+        `export * from "./namespaces/${args.name}"`
+      )
+      appLines.push(`export * as ${args.name} from "./namespaces/${args.name}"`)
 
       await fsp.writeFile(root("src", "app.ts"), appLines.join("\n"), "utf8")
 
