@@ -24,7 +24,7 @@ export const db = knex({
 
 export interface TableOptions {
   name: string
-  colMaker: (table: Knex.CreateTableBuilder) => void
+  setup: (table: Knex.CreateTableBuilder) => void
 }
 
 export class Table<Type> {

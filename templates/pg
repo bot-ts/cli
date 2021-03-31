@@ -1,5 +1,6 @@
 import knex from "knex"
 import { Knex } from "knex"
+import path from "path"
 import chalk from "chalk"
 import * as logger from "./logger"
 
@@ -22,7 +23,7 @@ export const db = knex({
 
 export interface TableOptions {
   name: string
-  colMaker: (table: Knex.CreateTableBuilder) => void
+  setup: (table: Knex.CreateTableBuilder) => void
 }
 
 export class Table<Type> {
