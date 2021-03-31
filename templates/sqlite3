@@ -24,6 +24,7 @@ export const db = knex({
 
 export interface TableOptions {
   name: string
+  priority?: number
   setup: (table: Knex.CreateTableBuilder) => void
 }
 
