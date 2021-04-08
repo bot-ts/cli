@@ -2,7 +2,7 @@
 
 import cp from "child_process"
 import util from "util"
-import fs, { readFile } from "fs"
+import fs from "fs"
 import fsp from "fs/promises"
 import chalk from "chalk"
 import boxen from "boxen"
@@ -294,9 +294,11 @@ yargs(helpers.hideBin(process.argv))
         boxen(
           [
             "",
-            chalk.grey("# to quickly create a command or a listener"),
+            chalk.grey("# to quickly create a new file"),
             "  " + $ + " make command [name]",
             "  " + $ + " make listener [ClientEvent]",
+            "  " + $ + " make namespace [name]",
+            "  " + $ + " make table [name]",
             "",
             chalk.grey("# to watch typescript and reload " + args.name),
             "  " + $ + " npm run watch",
@@ -308,7 +310,7 @@ yargs(helpers.hideBin(process.argv))
             "  " + $ + " node .",
             "",
             chalk.grey("# format your files with prettier"),
-            "  " + $ + " npm run prettier",
+            "  " + $ + " npm run format",
             "",
           ].join("\n"),
           {
