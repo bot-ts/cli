@@ -14,6 +14,7 @@ import figlet from "figlet"
 import loading from "loading-cli"
 import rimraf from "rimraf"
 import zip from "extract-zip"
+import download from "download"
 import { join } from "path"
 
 const helpers = require("yargs/helpers")
@@ -114,12 +115,13 @@ async function isValidRoot(): Promise<boolean> {
   return true
 }
 
-async function download() {
-  await exec(
-    `wget -P "${join(
-      __dirname,
-      "cache"
-    )}" https://github.com/CamilleAbella/bot.ts/archive/master.zip -O bot.ts-master.zip`
+async function updateCache() {
+  await download(
+    "https://github.com/CamilleAbella/bot.ts/archive/master.zip",
+    join(__dirname, "cache", "bot.ts-master.zip"),
+    {
+      filename: "bot.ts-master.zip",
+    }
   )
   await zip(join(__dirname, "cache", "bot.ts-master.zip"), {
     dir: join(__dirname, "cache"),
@@ -229,7 +231,7 @@ yargs(helpers.hideBin(process.argv))
       await loader(
         "downloading",
         async () => {
-          await download()
+          await updateCache()
           fse.copySync(join(__dirname, "cache", "bot.ts-master"), project())
         },
         "downloaded"
@@ -495,7 +497,7 @@ yargs(helpers.hideBin(process.argv))
       await loader(
         "downloading",
         async () => {
-          await download()
+          await updateCache()
 
           const cache = (...segments: string[]) =>
             join(__dirname, "cache", "bot.ts-master", ...segments)
