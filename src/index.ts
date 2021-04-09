@@ -4,6 +4,7 @@ import cp from "child_process"
 import util from "util"
 import fs from "fs"
 import fsp from "fs/promises"
+import fse from "fs-extra"
 import chalk from "chalk"
 import boxen from "boxen"
 import yargs from "yargs/yargs"
@@ -11,6 +12,8 @@ import Discord from "discord.js"
 import ss from "string-similarity"
 import figlet from "figlet"
 import loading from "loading-cli"
+import rimraf from "rimraf"
+import zip from "extract-zip"
 import { join } from "path"
 
 const helpers = require("yargs/helpers")
@@ -111,6 +114,18 @@ async function isValidRoot(): Promise<boolean> {
   return true
 }
 
+async function download() {
+  await exec(
+    `wget -P "${join(
+      __dirname,
+      "cache"
+    )}" https://github.com/CamilleAbella/bot.ts/archive/master.zip -O bot.ts-master.zip`
+  )
+  await zip(join(__dirname, "cache", "bot.ts-master.zip"), {
+    dir: join(__dirname, "cache"),
+  })
+}
+
 yargs(helpers.hideBin(process.argv))
   .scriptName("make")
   .usage("$0 <cmd> [args] --options")
@@ -208,20 +223,17 @@ yargs(helpers.hideBin(process.argv))
 
       console.time("duration")
 
-      await loader(
-        "downloading",
-        () =>
-          exec(
-            `git clone https://github.com/CamilleAbella/bot.ts.git "${root(
-              args.path,
-              args.name
-            )}"`
-          ),
-        "downloaded"
-      )
-
       const project = (...segments: string[]) =>
         root(args.path, args.name, ...segments)
+
+      await loader(
+        "downloading",
+        async () => {
+          await download()
+          fse.copySync(join(__dirname, "cache", "bot.ts-master"), project())
+        },
+        "downloaded"
+      )
 
       await loader(
         "initializing",
@@ -282,6 +294,14 @@ yargs(helpers.hideBin(process.argv))
             })
           }),
         "installed"
+      )
+
+      await loader(
+        "cleaning",
+        () => {
+          rimraf(join(__dirname, "cache"), () => null)
+        },
+        "cleaned"
       )
 
       console.log(chalk.green(`\n${args.name} bot has been created.`))
@@ -460,6 +480,50 @@ yargs(helpers.hideBin(process.argv))
 
       console.log(chalk.green(`\n${args.name} table has been created.`))
       console.log(chalk.cyanBright(`=> ${tablePath}`))
+      console.timeEnd("duration")
+    }
+  )
+  .command(
+    "upgrade",
+    "upgrade bot.ts core files",
+    () => null,
+    async () => {
+      console.time("duration")
+
+      if (!(await isValidRoot())) return
+
+      await loader(
+        "downloading",
+        async () => {
+          await download()
+
+          const cache = (...segments: string[]) =>
+            join(__dirname, "cache", "bot.ts-master", ...segments)
+          const fromTo = (
+            ...segments: string[]
+          ): [from: string, to: string] => [
+            cache(...segments),
+            root(...segments),
+          ]
+
+          fse.copySync(...fromTo("Gulpfile.js"))
+          fse.copySync(...fromTo("tsconfig.json"))
+          fse.copySync(...fromTo("src", "app"))
+          fse.copySync(...fromTo("src", "index.ts"))
+          fse.copySync(...fromTo("src", "listeners", "message.ts"))
+        },
+        "downloaded"
+      )
+
+      await loader(
+        "cleaning",
+        () => {
+          rimraf(join(__dirname, "cache"), () => null)
+        },
+        "cleaned"
+      )
+
+      console.log(chalk.green(`\nbot.ts core has been upgraded.`))
       console.timeEnd("duration")
     }
   )
