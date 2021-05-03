@@ -473,9 +473,18 @@ function makeFile(id: "command" | "listener", arg: string) {
       yargs.positional(arg, {
         describe: id + " " + arg,
       })
+      if (id === "listener") {
+        yargs.option("name", {
+          alias: "n",
+          describe: "The name of listener file",
+          default: null,
+        })
+      }
     },
     async (argv: any) => {
       console.time("duration")
+
+      const filename = (argv.name ?? argv[arg]) + ".ts"
 
       if (arg === "event") {
         if (!argv[arg]) {
@@ -532,7 +541,7 @@ function makeFile(id: "command" | "listener", arg: string) {
         console.log(chalk.cyanBright(`=> ${directory}`))
       }
 
-      const path = join(directory, argv[arg] + ".ts")
+      const path = join(directory, filename)
       if (fs.existsSync(path))
         return console.error(chalk.red(`${argv[arg]} ${id} already exists.`))
 
