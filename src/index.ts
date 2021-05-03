@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import cp from "child_process"
-import util from "util"
 import fs from "fs"
 import fsp from "fs/promises"
 import chalk from "chalk"
@@ -15,7 +14,14 @@ import { join } from "path"
 
 const helpers = require("yargs/helpers")
 const events = require("../events.json")
-const exec = util.promisify(cp.exec)
+const exec = (cmd: string, options?: cp.CommonOptions): Promise<null> => {
+  return new Promise((res, rej) => {
+    cp.exec(cmd, options, (err) => {
+      if (err) rej(err)
+      else res(null)
+    })
+  })
+}
 
 const root = (...segments: string[]) => join(process.cwd(), ...segments)
 
@@ -212,10 +218,14 @@ yargs(helpers.hideBin(process.argv))
         "downloading",
         () =>
           exec(
-            `git clone https://github.com/CamilleAbella/bot.ts.git "${root(
-              args.path,
-              args.name
-            )}"`
+            [
+              "git clone",
+              "--depth=1",
+              "--single-branch",
+              "--branch=master",
+              "https://github.com/CamilleAbella/bot.ts.git",
+              `"${root(args.path, args.name)}"`,
+            ].join(" ")
           ),
         "downloaded"
       )
@@ -268,19 +278,15 @@ yargs(helpers.hideBin(process.argv))
               args.name[0].toUpperCase() + args.name.slice(1)
             } - powered by [bot.ts](https://github.com/CamilleAbella/bot.ts)`
           )
+
+          await exec("git remote remove origin", { cwd: project() })
         },
         "initialized"
       )
 
       await loader(
         "installing",
-        () =>
-          new Promise<void>((resolve, reject) => {
-            cp.exec("npm i", { cwd: project() }, (err) => {
-              if (err) reject(err)
-              else resolve()
-            })
-          }),
+        () => exec("npm i", { cwd: project() }),
         "installed"
       )
 

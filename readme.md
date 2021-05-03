@@ -15,7 +15,6 @@ make bot "NAME" --token "TOKEN" --locale "fr-FR"
 cd "NAME"
 
 # replace remote
-git remote remove origin
 git remote add origin "YOUR REMOTE LINK"
 
 # make your first command
