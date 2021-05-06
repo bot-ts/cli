@@ -279,6 +279,7 @@ yargs(helpers.hideBin(process.argv))
             } - powered by [bot.ts](https://github.com/CamilleAbella/bot.ts)`
           )
 
+          await exec("git remove -fr docs", { cwd: project() })
           await exec("git remote remove origin", { cwd: project() })
         },
         "initialized"
