@@ -34,6 +34,7 @@
 * Faster [Gulp](https://gulpjs.com/) based file watcher.
 * GitHub Actions checks for TYpeScript typings [here](https://github.com/CamilleAbella/bot.ts/blob/master/.github/workflows/test.yml).
 * Beautiful console logger using [Chalk](https://github.com/chalk/chalk).
+* [Gulp](https://gulpjs.com/) based framework updater.
 
 ## Why using bot.ts ?
 
