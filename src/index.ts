@@ -154,6 +154,10 @@ yargs(helpers.hideBin(process.argv))
           type: "string",
           describe: "bot token",
         })
+        .option("secret", {
+          type: "string",
+          describe: "bot secret",
+        })
         .option("owner", {
           alias: "o",
           type: "string",
@@ -269,6 +273,8 @@ yargs(helpers.hideBin(process.argv))
           } else if (args.owner) {
             await injectEnvLine("OWNER", args.owner, project())
           }
+
+          if (args.secret) await injectEnvLine("SECRET", args.secret, project())
 
           await setupDatabase(project(), args)
 
