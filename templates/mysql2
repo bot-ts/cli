@@ -6,7 +6,7 @@ import * as logger from "./logger"
 import * as handler from "./handler"
 
 export const tableHandler = new handler.Handler(
-  process.env.TABLES_PATH ?? path.join(process.cwd(), "dist", "tables")
+  process.env.BOT_TABLES_PATH ?? path.join(process.cwd(), "dist", "tables")
 )
 
 tableHandler.once("finish", async (pathList) => {
@@ -34,11 +34,11 @@ export const db = knex({
   client: "mysql2",
   useNullAsDefault: true,
   connection: {
-    port: +(process.env.PORT ?? 3306),
-    host: process.env.HOST ?? "127.0.0.1",
-    user: process.env.USER ?? "root",
-    password: process.env.PASSWORD,
-    database: process.env.DATABASE ?? "database",
+    port: +(process.env.DB_PORT ?? 3306),
+    host: process.env.DB_HOST ?? "127.0.0.1",
+    user: process.env.DB_USER ?? "root",
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_DATABASE ?? "database",
   },
 })
 

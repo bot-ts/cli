@@ -6,7 +6,7 @@ import * as logger from "./logger"
 import * as handler from "./handler"
 
 export const tableHandler = new handler.Handler(
-  process.env.TABLES_PATH ?? path.join(process.cwd(), "dist", "tables")
+  process.env.BOT_TABLES_PATH ?? path.join(process.cwd(), "dist", "tables")
 )
 
 tableHandler.once("finish", async (pathList) => {
@@ -34,11 +34,11 @@ export const db = knex({
   client: "pg",
   useNullAsDefault: true,
   connection: {
-    port: +(process.env.PORT ?? 5432),
-    host: process.env.HOST ?? "localhost",
-    user: process.env.USER ?? "postgres",
-    password: process.env.PASSWORD,
-    database: process.env.DATABASE ?? "postgres"
+    port: +(process.env.DB_PORT ?? 5432),
+    host: process.env.DB_HOST ?? "localhost",
+    user: process.env.DB_USER ?? "postgres",
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_DATABASE ?? "postgres"
   },
 })
 
