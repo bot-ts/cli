@@ -75,13 +75,13 @@ async function setupDatabase(
     "utf8"
   )
 
-  if (database.host) await injectEnvLine("HOST", database.host, projectPath)
-  if (database.port) await injectEnvLine("PORT", database.port, projectPath)
-  if (database.user) await injectEnvLine("USER", database.user, projectPath)
+  if (database.host) await injectEnvLine("DB_HOST", database.host, projectPath)
+  if (database.port) await injectEnvLine("DB_PORT", database.port, projectPath)
+  if (database.user) await injectEnvLine("DB_USER", database.user, projectPath)
   if (database.password)
-    await injectEnvLine("PASSWORD", database.password, projectPath)
+    await injectEnvLine("DB_PASSWORD", database.password, projectPath)
   if (database.dbname)
-    await injectEnvLine("DATABASE", database.dbname, projectPath)
+    await injectEnvLine("DB_DATABASE", database.dbname, projectPath)
 }
 
 async function injectEnvLine(
@@ -245,8 +245,8 @@ yargs(helpers.hideBin(process.argv))
 
           await fsp.writeFile(project(".env"), "", "utf8")
 
-          await injectEnvLine("PREFIX", args.prefix, project())
-          await injectEnvLine("LOCALE", args.locale, project())
+          await injectEnvLine("BOT_PREFIX", args.prefix, project())
+          await injectEnvLine("BOT_LOCALE", args.locale, project())
 
           const client = new Discord.Client()
           if (args.token) {
@@ -255,7 +255,7 @@ yargs(helpers.hideBin(process.argv))
             } catch (error) {
               return console.error(chalk.red(`Invalid token given.`))
             }
-            await injectEnvLine("TOKEN", args.token, project())
+            await injectEnvLine("BOT_TOKEN", args.token, project())
           }
 
           if (args.token && !args.owner) {
@@ -267,14 +267,15 @@ yargs(helpers.hideBin(process.argv))
 
             if (ownerID === "none") warns.push("failure to detect bot owner.")
 
-            await injectEnvLine("OWNER", ownerID, project())
+            await injectEnvLine("BOT_OWNER", ownerID, project())
 
             client.destroy()
           } else if (args.owner) {
-            await injectEnvLine("OWNER", args.owner, project())
+            await injectEnvLine("BOT_OWNER", args.owner, project())
           }
 
-          if (args.secret) await injectEnvLine("SECRET", args.secret, project())
+          if (args.secret)
+            await injectEnvLine("BOT_SECRET", args.secret, project())
 
           await setupDatabase(project(), args)
 
