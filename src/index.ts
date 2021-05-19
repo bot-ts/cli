@@ -61,6 +61,7 @@ async function setupDatabase(
   // delete all other database dependencies.
   for (const dbname of ["sqlite3", "mysql2", "pg"]) {
     if (dbname !== database.database) conf.dependencies[dbname] = undefined
+    else conf.dependencies[dbname] = "latest"
   }
 
   await writeJSON(join(projectPath, "package.json"), conf)
