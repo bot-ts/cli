@@ -287,6 +287,7 @@ yargs(helpers.hideBin(process.argv))
             } - powered by [bot.ts](https://github.com/CamilleAbella/bot.ts)`
           )
 
+          await exec("git fetch --unshallow origin", { cwd: project() })
           await exec("git remote remove origin", { cwd: project() })
         },
         "initialized"
