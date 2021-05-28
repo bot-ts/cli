@@ -1,12 +1,11 @@
 import * as app from "../app"
 
-const command: app.Command = {
+module.exports = new app.Command({
   name: "{{ name }}",
-  description: "",
+  description: "The {{ name }} command",
+  channelType: "all",
   async run(message) {
-    // todo: code here
-    await message.reply("{{ name }} command is not yet implemented.")
+   // todo: code here
+   await message.reply("{{ name }} command is not yet implemented.")
   }
-}
-
-module.exports = command
+})

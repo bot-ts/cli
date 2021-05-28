@@ -5,7 +5,7 @@ const table = new app.Table<{
 }>({
   name: "{{ name }}",
   setup: (table) => {
-    // setup table colons => http://knexjs.org/#Schema-Building
+    // setup table columns => http://knexjs.org/#Schema-Building
   },
 })
 
