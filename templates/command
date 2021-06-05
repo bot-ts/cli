@@ -5,7 +5,7 @@ module.exports = new app.Command({
   description: "The {{ name }} command",
   channelType: "all",
   async run(message) {
-   // todo: code here
-   await message.reply("{{ name }} command is not yet implemented.")
+    // todo: code here
+    await message.reply("{{ name }} command is not yet implemented.")
   }
 })

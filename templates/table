@@ -1,8 +1,10 @@
 import * as app from "../app"
 
-const table = new app.Table<{
+export interface {{ name }} {
   // type of table
-}>({
+}
+
+const table = new app.Table<{{ name }}>({
   name: "{{ name }}",
   setup: (table) => {
     // setup table columns => http://knexjs.org/#Schema-Building
