@@ -47,5 +47,6 @@
   "shardError": ["error", "id"],
   "shardReady": ["id", "unavailableGuilds"],
   "shardReconnecting": "id",
-  "shardResume": ["id", "replayedEvents"]
+  "shardResume": ["id", "replayedEvents"],
+  "raw": "packet"
 }
