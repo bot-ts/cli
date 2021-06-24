@@ -32,6 +32,8 @@
     "make": "./bin/index.js"
   },
   "devDependencies": {
+    "@types/boxen": "^3.0.1",
+    "@types/figlet": "^1.5.1",
     "@types/node": "^15.12.4",
     "@types/string-similarity": "^4.0.0",
     "@types/ws": "^7.4.5",

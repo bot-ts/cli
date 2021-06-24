@@ -343,7 +343,7 @@ yargs(helpers.hideBin(process.argv))
             ".env"
           )} information. ${chalk.green("Enjoy!")}`,
           {
-            borderStyle: boxen.BorderStyle.Round,
+            borderStyle: "round",
             borderColor: "yellow",
             float: "center",
             padding: 1,
@@ -469,7 +469,12 @@ yargs(helpers.hideBin(process.argv))
       )
       await fsp.writeFile(
         tablePath,
-        template.replace(/{{ name }}/g, args.name),
+        template
+          .replace(/{{ name }}/g, args.name)
+          .replace(
+            /{{ Name }}/g,
+            args.name[0].toUpperCase() + args.name.slice(1)
+          ),
         "utf8"
       )
 
