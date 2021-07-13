@@ -48,5 +48,6 @@
   "shardReady": ["id", "unavailableGuilds"],
   "shardReconnecting": "id",
   "shardResume": ["id", "replayedEvents"],
-  "raw": "packet"
+  "raw": "packet",
+  "clickButton": "button"
 }
