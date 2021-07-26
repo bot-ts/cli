@@ -4,11 +4,9 @@ export interface {{ Name }} {
   // type of table
 }
 
-const table = new app.Table<{{ Name }}>({
+export default new app.Table<{{ Name }}>({
   name: "{{ name }}",
   setup: (table) => {
     // setup table columns => http://knexjs.org/#Schema-Building
   },
 })
-
-export default table
