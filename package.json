@@ -1,7 +1,7 @@
 {
   "name": "make-bot.ts",
-  "version": "1.8.0",
-  "description": "CLI for make Discord bots in TypeScript quickly.",
+  "version": "2.0.0",
+  "description": "CLI for make Discord bots in TypeScript quickly with discord.js v13.",
   "main": "bin/index.js",
   "scripts": {
     "build": "tsc",
