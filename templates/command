@@ -1,4 +1,4 @@
-import * as app from "../app"
+import * as app from "../app.js"
 
 export default new app.Command({
   name: "{{ name }}",
@@ -6,6 +6,6 @@ export default new app.Command({
   channelType: "all",
   async run(message) {
     // todo: code here
-    await message.reply("{{ name }} command is not yet implemented.")
+    return message.send("{{ name }} command is not yet implemented.")
   }
 })
