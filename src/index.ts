@@ -436,9 +436,11 @@ yargs(helpers.hideBin(process.argv))
       appLines.splice(
         spaceIndex,
         0,
-        `export * from "./namespaces/${args.name}"`
+        `export * from "./namespaces/${args.name}.js"`
       )
-      appLines.push(`export * as ${args.name} from "./namespaces/${args.name}"`)
+      appLines.push(
+        `export * as ${args.name} from "./namespaces/${args.name}.js"`
+      )
 
       await fsp.writeFile(root("src", "app.ts"), appLines.join("\n"), "utf8")
 
