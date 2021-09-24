@@ -60,13 +60,11 @@ export class Table<Type> {
     try {
       await db.schema.createTable(this.options.name, this.options.setup)
       logger.log(
-        `created table ${chalk.blueBright(this.options.name)}`,
-        "database"
+        `created table ${chalk.blueBright(this.options.name)}`
       )
     } catch (error) {
       logger.log(
-        `loaded table ${chalk.blueBright(this.options.name)}`,
-        "database"
+        `loaded table ${chalk.blueBright(this.options.name)}`
       )
     }
     return this
