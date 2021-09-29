@@ -248,7 +248,13 @@ yargs(helpers.hideBin(process.argv))
 
           await injectEnvLine(
             "BOT_INTENTS",
-            "GUILDS,GUILD_MESSAGES,DIRECT_MESSAGE_REACTIONS,GUILD_MESSAGE_REACTIONS",
+            [
+              "GUILDS",
+              "GUILD_MEMBERS",
+              "GUILD_MESSAGES",
+              "GUILD_MESSAGE_REACTIONS",
+              "DIRECT_MESSAGE_REACTIONS",
+            ].join(","),
             project()
           )
           await injectEnvLine("BOT_PREFIX", args.prefix, project())
