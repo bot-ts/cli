@@ -246,17 +246,10 @@ yargs(helpers.hideBin(process.argv))
 
           await fsp.writeFile(project(".env"), "", "utf8")
 
-          await injectEnvLine(
-            "BOT_INTENTS",
-            [
-              "GUILDS",
-              "GUILD_MEMBERS",
-              "GUILD_MESSAGES",
-              "GUILD_MESSAGE_REACTIONS",
-              "DIRECT_MESSAGE_REACTIONS",
-            ].join(","),
-            project()
-          )
+          const intents =
+            "GUILDS,GUILD_MEMBERS,GUILD_BANS,GUILD_EMOJIS_AND_STICKERS,GUILD_INTEGRATIONS,GUILD_WEBHOOKS,GUILD_INVITES,GUILD_VOICE_STATES,GUILD_PRESENCES,GUILD_MESSAGES,GUILD_MESSAGE_REACTIONS,GUILD_MESSAGE_TYPING,DIRECT_MESSAGES,DIRECT_MESSAGE_REACTIONS,DIRECT_MESSAGE_TYPING"
+
+          await injectEnvLine("BOT_INTENTS", intents, project())
           await injectEnvLine("BOT_PREFIX", args.prefix, project())
           await injectEnvLine("BOT_LOCALE", args.locale, project())
 
