@@ -11,7 +11,7 @@
     <a href="https://www.npmjs.com/package/make-bot.ts"><img src="https://img.shields.io/npm/v/make-bot.ts.svg?maxAge=3600" alt="CLI version" /></a>
     <a href="https://www.npmjs.com/package/make-bot.ts"><img src="https://img.shields.io/npm/dt/make-bot.ts.svg?maxAge=3600" alt="CLI downloads" /></a>
     <a href="https://github.com/CamilleAbella/bot.ts/actions/workflows/test.yml"><img src="https://github.com/CamilleAbella/bot.ts/actions/workflows/test.yml/badge.svg" alt="Build status" /></a>
-    <a href="https://david-dm.org/CamilleAbella/bot.ts"><img src="https://img.shields.io/david/camilleabella/bot.ts" alt="Dependencies" /></a>
+    <img alt="Dependency status" src="https://img.shields.io/librariesio/github/CamilleAbella/bot.ts">
   </div>
 </div>
 
