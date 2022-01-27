@@ -120,9 +120,9 @@ async function isValidRoot(): Promise<boolean> {
 
 yargs(helpers.hideBin(process.argv))
   .scriptName("make")
-  .usage("$0 <cmd> [args] --options")
+  .usage("$0 <cmd> [args] [--options]")
   .command(
-    "bot [name] [path]",
+    "bot [name] [path] [--options]",
     "create typescript bot",
     (yargs) =>
       yargs
@@ -133,6 +133,12 @@ yargs(helpers.hideBin(process.argv))
         .positional("path", {
           default: ".",
           describe: "bot path",
+        })
+        .option("code-style", {
+          alias: ["style", "code"],
+          default: "options",
+          choices: ["options", "chain"],
+          describe: "style of code",
         })
         .option("prefix", {
           alias: "p",
@@ -219,6 +225,8 @@ yargs(helpers.hideBin(process.argv))
 
       console.time("duration")
 
+      const codeStyle = args["code-style"] as "options" | "chain"
+
       await loader(
         "downloading",
         () =>
@@ -227,7 +235,7 @@ yargs(helpers.hideBin(process.argv))
               "git clone",
               "--depth=1",
               "--single-branch",
-              "--branch=master",
+              "--branch=" + (codeStyle === "options" ? "master" : "design"),
               "https://github.com/CamilleAbella/bot.ts.git",
               `"${root(args.path, args.name)}"`,
             ].join(" ")
@@ -544,8 +552,15 @@ function makeFile(id: "command" | "listener", arg: string) {
 
       if (!(await isValidRoot())) return
 
+      const { style } = require(root("package.json"))
+
       const template = await fsp.readFile(
-        join(__dirname, "..", "templates", id),
+        join(
+          __dirname,
+          "..",
+          "templates",
+          id + (id === "command" && style === "chain" ? "_chain" : "")
+        ),
         "utf8"
       )
 
