@@ -1,6 +1,6 @@
 {
   "name": "make-bot.ts",
-  "version": "2.5.1",
+  "version": "2.5.3",
   "description": "CLI for make Discord bots in TypeScript quickly with discord.js v13.",
   "main": "bin/index.js",
   "scripts": {
@@ -29,27 +29,31 @@
   },
   "homepage": "https://github.com/CamilleAbella/make-bot.ts#readme",
   "bin": {
-    "make": "./bin/index.js"
+    "make": "./bin/index.js",
+    "create": "./bin/index.js",
+    "new": "./bin/index.js",
+    "bts": "./bin/index.js",
+    "ts": "./bin/index.js"
   },
   "devDependencies": {
     "@types/boxen": "^3.0.1",
-    "@types/figlet": "^1.5.1",
-    "@types/node": "^15.12.4",
+    "@types/figlet": "^1.5.4",
+    "@types/node": "^17.0.20",
     "@types/string-similarity": "^4.0.0",
-    "@types/ws": "^7.4.5",
-    "@types/yargs": "^17.0.0",
-    "prettier": "^2.3.1",
-    "typescript": "^4.3.4",
-    "yarn": "^1.22.15"
+    "@types/ws": "^8.2.3",
+    "@types/yargs": "^17.0.8",
+    "prettier": "^2.5.1",
+    "typescript": "^4.5.5",
+    "yarn": "^1.22.17"
   },
   "dependencies": {
-    "boxen": "^5.0.1",
-    "chalk": "^4.1.1",
-    "discord.js": "^12.5.3",
-    "figlet": "^1.5.0",
+    "boxen": "^6.2.1",
+    "chalk": "^5.0.0",
+    "discord.js": "^13.6.0",
+    "figlet": "^1.5.2",
     "loading-cli": "^1.1.0",
     "string-similarity": "^4.0.4",
-    "yargs": "^17.0.1"
+    "yargs": "^17.3.1"
   },
   "engines": {
     "node": ">=16",

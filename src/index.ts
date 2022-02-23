@@ -6,7 +6,7 @@ import fsp from "fs/promises"
 import chalk from "chalk"
 import boxen from "boxen"
 import yargs from "yargs/yargs"
-import Discord from "discord.js"
+import discord from "discord.js"
 import ss from "string-similarity"
 import figlet from "figlet"
 import loading from "loading-cli"
@@ -196,6 +196,10 @@ yargs(helpers.hideBin(process.argv))
         }),
     async (args) => {
       const borderNone = {
+        top: " ",
+        left: " ",
+        right: " ",
+        bottom: " ",
         topLeft: " ",
         topRight: " ",
         bottomLeft: " ",
@@ -261,7 +265,7 @@ yargs(helpers.hideBin(process.argv))
           await injectEnvLine("BOT_PREFIX", args.prefix, project())
           await injectEnvLine("BOT_LOCALE", args.locale, project())
 
-          const client = new Discord.Client()
+          const client = new discord.Client<true>({ intents: [] })
           if (args.token) {
             try {
               await client.login(args.token)
@@ -271,10 +275,13 @@ yargs(helpers.hideBin(process.argv))
             await injectEnvLine("BOT_TOKEN", args.token, project())
           }
 
+          if (!client.isReady())
+            return console.error(chalk.red("Discord Client connection error"))
+
           if (args.token && !args.owner) {
-            const app = await client.fetchApplication()
+            const app = await client.application.fetch()
             const ownerID: string =
-              app.owner instanceof Discord.User
+              app.owner instanceof discord.User
                 ? app.owner.id
                 : app.owner?.id ?? "none"
 
