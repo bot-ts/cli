@@ -67,7 +67,7 @@ async function setupDatabase(
   await writeJSON(join(projectPath, "package.json"), conf)
 
   const template = await fsp.readFile(
-    join(__dirname, "..", "templates", database.database),
+    join(__dirname, "..", "templates", database.database + ".ts"),
     "utf8"
   )
   await fsp.writeFile(
@@ -485,7 +485,7 @@ yargs(helpers.hideBin(process.argv))
       const tablePath = root("src", "tables", args.name + ".ts")
 
       const template = await fsp.readFile(
-        join(__dirname, "..", "templates", "table"),
+        join(__dirname, "..", "templates", "table.ts"),
         "utf8"
       )
       await fsp.writeFile(
@@ -566,7 +566,7 @@ function makeFile(id: "command" | "listener", arg: string) {
           __dirname,
           "..",
           "templates",
-          id + (id === "command" && style === "chain" ? "_chain" : "")
+          id + (id === "command" && style === "chain" ? "_chain" : "") + ".ts"
         ),
         "utf8"
       )

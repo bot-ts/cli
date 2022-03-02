@@ -10,5 +10,8 @@
     "esModuleInterop": true,
     "moduleResolution": "Node",
     "forceConsistentCasingInFileNames": true
-  }
+  },
+  "exclude": [
+    "templates"
+  ]
 }
