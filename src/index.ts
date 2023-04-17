@@ -240,7 +240,7 @@ yargs(helpers.hideBin(process.argv))
               "--depth=1",
               "--single-branch",
               "--branch=" + (codeStyle === "options" ? "master" : "design"),
-              "https://github.com/CamilleAbella/bot.ts.git",
+              "https://github.com/bot-ts/framework.git",
               `"${root(args.path, args.name)}"`,
             ].join(" ")
           ),
@@ -414,6 +414,8 @@ yargs(helpers.hideBin(process.argv))
     },
     async (args) => {
       console.time("duration")
+
+      // @ts-ignore
       await setupDatabase(root(), args)
 
       console.log(chalk.green(`\n${args.database} database has been created.`))
@@ -440,6 +442,7 @@ yargs(helpers.hideBin(process.argv))
       await fsp.writeFile(
         namespacePath,
         `export function getSome${
+          // @ts-ignore
           args.name[0].toUpperCase() + args.name.slice(1)
         }Value(): unknown {}`,
         "utf8"
@@ -491,9 +494,11 @@ yargs(helpers.hideBin(process.argv))
       await fsp.writeFile(
         tablePath,
         template
+          // @ts-ignore
           .replace(/{{ name }}/g, args.name)
           .replace(
             /{{ Name }}/g,
+            // @ts-ignore
             args.name[0].toUpperCase() + args.name.slice(1)
           ),
         "utf8"
