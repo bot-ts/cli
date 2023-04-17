@@ -1,6 +1,6 @@
 {
   "name": "make-bot.ts",
-  "version": "2.5.3",
+  "version": "2.5.4",
   "description": "CLI for make Discord bots in TypeScript quickly with discord.js v13.",
   "main": "bin/index.js",
   "scripts": {
@@ -22,12 +22,12 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/CamilleAbella/make-bot.ts.git"
+    "url": "git+https://github.com/GhomKrosmonaute/make-bot.ts.git"
   },
   "bugs": {
-    "url": "https://github.com/CamilleAbella/make-bot.ts/issues"
+    "url": "https://github.com/GhomKrosmonaute/make-bot.ts/issues"
   },
-  "homepage": "https://github.com/CamilleAbella/make-bot.ts#readme",
+  "homepage": "https://github.com/GhomKrosmonaute/make-bot.ts#readme",
   "bin": {
     "make": "./bin/index.js",
     "create": "./bin/index.js",
@@ -46,7 +46,7 @@
   },
   "dependencies": {
     "boxen": "^6.2.1",
-    "chalk": "^5.0.1",
+    "chalk": "=4.1.2",
     "discord.js": "^13.7.0",
     "figlet": "^1.5.2",
     "loading-cli": "^1.1.0",
