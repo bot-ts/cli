@@ -303,7 +303,7 @@ yargs(helpers.hideBin(process.argv))
             project("readme.md"),
             `# ${
               args.name[0].toUpperCase() + args.name.slice(1)
-            } - powered by [bot.ts](https://github.com/CamilleAbella/bot.ts)`
+            } - powered by [bot.ts](https://github.com/bot-ts/framework)`
           )
 
           await exec("git fetch --unshallow origin", { cwd: project() })
