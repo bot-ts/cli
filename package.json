@@ -27,7 +27,7 @@
   "bugs": {
     "url": "https://github.com/GhomKrosmonaute/make-bot.ts/issues"
   },
-  "homepage": "https://github.com/GhomKrosmonaute/make-bot.ts#readme",
+  "homepage": "https://ghom.gitbook.io/bot-ts/",
   "bin": {
     "make": "./bin/index.js",
     "create": "./bin/index.js",
