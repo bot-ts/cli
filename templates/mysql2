@@ -1,18 +1,24 @@
-import knex from "knex"
+// system file, please don't modify it
 
-/**
- * Welcome to the database file!
- * You can get the docs of **knex** [here](http://knexjs.org/)
- */
+import { ORM } from "@ghom/orm"
+import path from "path"
 
-export const db = knex({
-  client: "mysql2",
-  useNullAsDefault: true,
-  connection: {
-    port: +(process.env.DB_PORT ?? 3306),
-    host: process.env.DB_HOST ?? "127.0.0.1",
-    user: process.env.DB_USER ?? "root",
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_DATABASE ?? "database",
+import * as logger from "./logger.js"
+
+export const orm = new ORM({
+  location: path.join(process.cwd(), "src", "tables"),
+  database: {
+    client: "mysql2",
+    useNullAsDefault: true,
+    connection: {
+      port: +(process.env.DB_PORT ?? 3306),
+      host: process.env.DB_HOST ?? "127.0.0.1",
+      user: process.env.DB_USER ?? "root",
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_DATABASE ?? "database",
+    },
   },
+  logger: logger.createLogger("database"),
 })
+
+export * from "@ghom/orm"
