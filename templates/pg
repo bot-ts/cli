@@ -6,7 +6,7 @@ import path from "path"
 import * as logger from "./logger.js"
 
 export const orm = new ORM({
-  location: path.join(process.cwd(), "src", "tables"),
+  location: path.join(process.cwd(), "dist", "tables"),
   database: {
     client: "pg",
     useNullAsDefault: true,
