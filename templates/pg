@@ -4,8 +4,6 @@ import { ORM } from "@ghom/orm"
 import { logger } from "@ghom/logger"
 import path from "path"
 
-import * as logger from "./logger.js"
-
 export const orm = new ORM({
   location: path.join(process.cwd(), "dist", "tables"),
   database: {
