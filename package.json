@@ -1,11 +1,12 @@
 {
   "name": "make-bot.ts",
-  "version": "2.7.1",
+  "version": "2.8.0",
   "description": "CLI for make Discord bots in TypeScript quickly with discord.js v13.",
   "main": "bin/index.js",
   "scripts": {
     "build": "tsc",
     "format": "prettier --write src events.json",
+    "test": "npm pack --pack-destination ./pack/ && npm i -g ./pack/make-bot.ts-2.8.0.tgz",
     "prepublishOnly": "npm run format && tsc"
   },
   "prettier": {
@@ -29,11 +30,7 @@
   },
   "homepage": "https://ghom.gitbook.io/bot-ts/",
   "bin": {
-    "make": "./bin/index.js",
-    "create": "./bin/index.js",
-    "new": "./bin/index.js",
-    "bts": "./bin/index.js",
-    "ts": "./bin/index.js"
+    "bot": "./bin/index.js"
   },
   "devDependencies": {
     "@types/figlet": "^1.5.4",

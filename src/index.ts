@@ -119,10 +119,10 @@ async function isValidRoot(): Promise<boolean> {
 }
 
 yargs(helpers.hideBin(process.argv))
-  .scriptName("make")
+  .scriptName("bot")
   .usage("$0 <cmd> [args] [--options]")
   .command(
-    "bot [name] [path] [--options]",
+    "make [name] [path] [--options]",
     "create typescript bot",
     (yargs) =>
       yargs
@@ -133,12 +133,6 @@ yargs(helpers.hideBin(process.argv))
         .positional("path", {
           default: ".",
           describe: "bot path",
-        })
-        .option("code-style", {
-          alias: ["style", "code"],
-          default: "options",
-          choices: ["options", "chain"],
-          describe: "style of code",
         })
         .option("prefix", {
           alias: "p",
@@ -229,8 +223,6 @@ yargs(helpers.hideBin(process.argv))
 
       console.time("duration")
 
-      const codeStyle = args["code-style"] as "options" | "chain"
-
       await loader(
         "downloading",
         () =>
@@ -239,7 +231,7 @@ yargs(helpers.hideBin(process.argv))
               "git clone",
               "--depth=1",
               "--single-branch",
-              "--branch=" + (codeStyle === "options" ? "master" : "design"),
+              "--branch=master",
               "https://github.com/bot-ts/framework.git",
               `"${root(args.path, args.name)}"`,
             ].join(" ")
@@ -329,10 +321,13 @@ yargs(helpers.hideBin(process.argv))
           [
             "",
             chalk.grey("# to quickly create a new file"),
-            "  " + $ + " make command [name]",
-            "  " + $ + " make listener [ClientEvent]",
-            "  " + $ + " make namespace [name]",
-            "  " + $ + " make table [name]",
+            "  " + $ + " bot add command [name]",
+            "  " + $ + " bot add listener [ClientEvent]",
+            "  " + $ + " bot add namespace [name]",
+            "  " + $ + " bot add table [name]",
+            "",
+            chalk.grey("# to change databse client"),
+            "  " + $ + " bot set database [slite3|mysql2|pg]",
             "",
             chalk.grey("# to watch typescript and reload " + args.name),
             "  " + $ + " npm run watch",
@@ -373,142 +368,159 @@ yargs(helpers.hideBin(process.argv))
       process.exit(0)
     }
   )
-  // @ts-ignore
-  .command(...makeFile("command", "name"))
-  // @ts-ignore
-  .command(...makeFile("listener", "event"))
   .command(
-    "database <database>",
-    "setup database",
+    "add <cmd> [args] [--options]",
+    "add a command, listener, namespace or table",
     (yargs) => {
       yargs
-        .positional("database", {
-          describe: "used database",
-          type: "string",
-          choices: ["sqlite3", "mysql2", "pg"],
-        })
-        .option("host", {
-          alias: "h",
-          default: "localhost",
-          describe: "database host",
-        })
-        .option("port", {
-          describe: "database port",
-          type: "string",
-        })
-        .option("user", {
-          alias: "u",
-          type: "string",
-          describe: "database user",
-        })
-        .option("password", {
-          alias: "pw",
-          type: "string",
-          describe: "database password",
-        })
-        .option("dbname", {
-          alias: "db",
-          type: "string",
-          describe: "database name",
-        })
-    },
-    async (args) => {
-      console.time("duration")
+        // @ts-ignore
+        .command(...makeFile("command", "name"))
+        // @ts-ignore
+        .command(...makeFile("listener", "event"))
+        .command(
+          "namespace <name>",
+          "make a namespace",
+          (yargs) => {
+            yargs.positional("name", {
+              describe: "namespace name",
+              type: "string",
+            })
+          },
+          async (args) => {
+            console.time("duration")
 
-      // @ts-ignore
-      await setupDatabase(root(), args)
+            if (!(await isValidRoot())) return
 
-      console.log(chalk.green(`\n${args.database} database has been created.`))
-      console.log(chalk.cyanBright(`=> ${root("src", "app", "database.ts")}`))
-      console.timeEnd("duration")
+            const namespacePath = root("src", "namespaces", args.name + ".ts")
+
+            await fsp.writeFile(
+              namespacePath,
+              `export function getSome${
+                // @ts-ignore
+                args.name[0].toUpperCase() + args.name.slice(1)
+              }Value(): unknown {}`,
+              "utf8"
+            )
+
+            const appFile = await fsp.readFile(root("src", "app.ts"), "utf8")
+            const appLines = appFile.split("\n")
+
+            if (/^\s*$/.test(appLines[appLines.length - 1])) appLines.pop()
+
+            const spaceIndex = appLines.findIndex((line) => /^\s*$/.test(line))
+
+            appLines.splice(
+              spaceIndex,
+              0,
+              `export * from "./namespaces/${args.name}.js"`
+            )
+            appLines.push(
+              `export * as ${args.name} from "./namespaces/${args.name}.js"`
+            )
+
+            await fsp.writeFile(
+              root("src", "app.ts"),
+              appLines.join("\n"),
+              "utf8"
+            )
+
+            console.log(
+              chalk.green(`\n${args.name} namespace has been created.`)
+            )
+            console.log(chalk.cyanBright(`=> ${namespacePath}`))
+            console.timeEnd("duration")
+          }
+        )
+        .command(
+          "table <name>",
+          "make a database table",
+          (yargs) => {
+            yargs.positional("name", {
+              describe: "table name",
+              type: "string",
+            })
+          },
+          async (args) => {
+            console.time("duration")
+
+            if (!(await isValidRoot())) return
+
+            const tablePath = root("src", "tables", args.name + ".ts")
+
+            const template = await fsp.readFile(
+              join(__dirname, "..", "templates", "table"),
+              "utf8"
+            )
+            await fsp.writeFile(
+              tablePath,
+              template
+                // @ts-ignore
+                .replace(/{{ name }}/g, args.name)
+                .replace(
+                  /{{ Name }}/g,
+                  // @ts-ignore
+                  args.name[0].toUpperCase() + args.name.slice(1)
+                ),
+              "utf8"
+            )
+
+            console.log(chalk.green(`\n${args.name} table has been created.`))
+            console.log(chalk.cyanBright(`=> ${tablePath}`))
+            console.timeEnd("duration")
+          }
+        )
     }
   )
-  .command(
-    "namespace <name>",
-    "make a namespace",
-    (yargs) => {
-      yargs.positional("name", {
-        describe: "namespace name",
-        type: "string",
-      })
-    },
-    async (args) => {
-      console.time("duration")
+  .command("set <cmd> [args] [--options]", "set something", (yargs) => {
+    yargs.command(
+      "database <database>",
+      "setup database",
+      (yargs) => {
+        yargs
+          .positional("database", {
+            describe: "used database",
+            type: "string",
+            choices: ["sqlite3", "mysql2", "pg"],
+          })
+          .option("host", {
+            alias: "h",
+            default: "localhost",
+            describe: "database host",
+          })
+          .option("port", {
+            describe: "database port",
+            type: "string",
+          })
+          .option("user", {
+            alias: "u",
+            type: "string",
+            describe: "database user",
+          })
+          .option("password", {
+            alias: "pw",
+            type: "string",
+            describe: "database password",
+          })
+          .option("dbname", {
+            alias: "db",
+            type: "string",
+            describe: "database name",
+          })
+      },
+      async (args) => {
+        console.time("duration")
 
-      if (!(await isValidRoot())) return
+        // @ts-ignore
+        await setupDatabase(root(), args)
 
-      const namespacePath = root("src", "namespaces", args.name + ".ts")
-
-      await fsp.writeFile(
-        namespacePath,
-        `export function getSome${
-          // @ts-ignore
-          args.name[0].toUpperCase() + args.name.slice(1)
-        }Value(): unknown {}`,
-        "utf8"
-      )
-
-      const appFile = await fsp.readFile(root("src", "app.ts"), "utf8")
-      const appLines = appFile.split("\n")
-
-      if (/^\s*$/.test(appLines[appLines.length - 1])) appLines.pop()
-
-      const spaceIndex = appLines.findIndex((line) => /^\s*$/.test(line))
-
-      appLines.splice(
-        spaceIndex,
-        0,
-        `export * from "./namespaces/${args.name}.js"`
-      )
-      appLines.push(
-        `export * as ${args.name} from "./namespaces/${args.name}.js"`
-      )
-
-      await fsp.writeFile(root("src", "app.ts"), appLines.join("\n"), "utf8")
-
-      console.log(chalk.green(`\n${args.name} namespace has been created.`))
-      console.log(chalk.cyanBright(`=> ${namespacePath}`))
-      console.timeEnd("duration")
-    }
-  )
-  .command(
-    "table <name>",
-    "make a database table",
-    (yargs) => {
-      yargs.positional("name", {
-        describe: "table name",
-        type: "string",
-      })
-    },
-    async (args) => {
-      console.time("duration")
-
-      if (!(await isValidRoot())) return
-
-      const tablePath = root("src", "tables", args.name + ".ts")
-
-      const template = await fsp.readFile(
-        join(__dirname, "..", "templates", "table"),
-        "utf8"
-      )
-      await fsp.writeFile(
-        tablePath,
-        template
-          // @ts-ignore
-          .replace(/{{ name }}/g, args.name)
-          .replace(
-            /{{ Name }}/g,
-            // @ts-ignore
-            args.name[0].toUpperCase() + args.name.slice(1)
-          ),
-        "utf8"
-      )
-
-      console.log(chalk.green(`\n${args.name} table has been created.`))
-      console.log(chalk.cyanBright(`=> ${tablePath}`))
-      console.timeEnd("duration")
-    }
-  )
+        console.log(
+          chalk.green(`\n${args.database} database has been created.`)
+        )
+        console.log(chalk.cyanBright(`=> ${root("src", "app", "database.ts")}`))
+        console.timeEnd("duration")
+      }
+    )
+  })
   .help().argv
 
 function makeFile(id: "command" | "listener", arg: string) {
@@ -564,15 +576,8 @@ function makeFile(id: "command" | "listener", arg: string) {
 
       if (!(await isValidRoot())) return
 
-      const { style } = require(root("package.json"))
-
       const template = await fsp.readFile(
-        join(
-          __dirname,
-          "..",
-          "templates",
-          id + (id === "command" && style === "chain" ? "_chain" : "")
-        ),
+        join(__dirname, "..", "templates", id),
         "utf8"
       )
 
