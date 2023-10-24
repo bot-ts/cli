@@ -393,14 +393,7 @@ yargs(helpers.hideBin(process.argv))
 
             const namespacePath = root("src", "namespaces", args.name + ".ts")
 
-            await fsp.writeFile(
-              namespacePath,
-              `export function getSome${
-                // @ts-ignore
-                args.name[0].toUpperCase() + args.name.slice(1)
-              }Value(): unknown {}`,
-              "utf8"
-            )
+            await fsp.writeFile(namespacePath, `export {}\n`, "utf8")
 
             const appFile = await fsp.readFile(root("src", "app.ts"), "utf8")
             const appLines = appFile.split("\n")
