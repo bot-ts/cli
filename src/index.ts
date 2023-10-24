@@ -286,6 +286,8 @@ yargs(helpers.hideBin(process.argv))
             await injectEnvLine("BOT_OWNER", args.owner, project())
           }
 
+          await injectEnvLine("BOT_ID", client.user.id, project())
+
           if (args.secret)
             await injectEnvLine("BOT_SECRET", args.secret, project())
 
