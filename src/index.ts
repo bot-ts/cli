@@ -217,7 +217,9 @@ yargs(helpers.hideBin(process.argv))
       if (await isNPMProject()) {
         if (
           !(await confirm(
-            "You are currently in a npm project. Do you want to continue to create a bot here? (Y/n)"
+            `${chalk.yellow(
+              "You are currently in a npm project. Do you want to continue to create a bot here?"
+            )} (y/N)`
           ))
         ) {
           console.log(chalk.red("Aborted."))
@@ -412,7 +414,7 @@ yargs(helpers.hideBin(process.argv))
     (yargs) => {
       yargs
         .command(...makeFile("command", "name"))
-        .command(...makeFile("command", "name"))
+        .command(...makeFile("slash", "name"))
         .command(...makeFile("listener", "event"))
         .command(
           "namespace <name>",
@@ -499,6 +501,7 @@ yargs(helpers.hideBin(process.argv))
             console.timeEnd("duration")
           }
         )
+        .demandCommand(1)
     }
   )
   .command("set <cmd> [args] [--options]", "set something", (yargs) => {
@@ -551,6 +554,7 @@ yargs(helpers.hideBin(process.argv))
       }
     )
   })
+  .demandCommand(1)
   .help().argv
 
 function makeFile(id: "command" | "listener" | "slash", arg: string) {
