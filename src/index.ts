@@ -10,10 +10,12 @@ import discord from "discord.js"
 import ss from "string-similarity"
 import figlet from "figlet"
 import loading from "loading-cli"
+import readline from "readline"
 import { join } from "path"
 
 const helpers = require("yargs/helpers")
 const events = require("../events.json")
+
 const exec = (cmd: string, options?: cp.CommonOptions): Promise<null> => {
   return new Promise((res, rej) => {
     cp.exec(cmd, options, (err) => {
@@ -24,6 +26,20 @@ const exec = (cmd: string, options?: cp.CommonOptions): Promise<null> => {
 }
 
 const root = (...segments: string[]) => join(process.cwd(), ...segments)
+
+async function confirm(question: string) {
+  const line = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  })
+
+  return new Promise((resolve) => {
+    line.question(question, (response) => {
+      line.close()
+      resolve(response.toUpperCase() === "Y")
+    })
+  })
+}
 
 async function readJSON(path: string) {
   return JSON.parse(await fsp.readFile(path, "utf8"))
@@ -118,6 +134,15 @@ async function isValidRoot(): Promise<boolean> {
   return true
 }
 
+async function isNPMProject(): Promise<boolean> {
+  try {
+    await fsp.readFile(root("package.json"), "utf8")
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
 yargs(helpers.hideBin(process.argv))
   .scriptName("bot")
   .usage("$0 <cmd> [args] [--options]")
@@ -189,6 +214,17 @@ yargs(helpers.hideBin(process.argv))
           describe: "database name",
         }),
     async (args) => {
+      if (await isNPMProject()) {
+        if (
+          !(await confirm(
+            "You are currently in a npm project. Do you want to continue to create a bot here? (Y/n)"
+          ))
+        ) {
+          console.log(chalk.red("Aborted."))
+          process.exit(0)
+        }
+      }
+
       const borderNone = {
         top: " ",
         left: " ",
@@ -375,13 +411,12 @@ yargs(helpers.hideBin(process.argv))
     "add a command, listener, namespace or table",
     (yargs) => {
       yargs
-        // @ts-ignore
         .command(...makeFile("command", "name"))
-        // @ts-ignore
+        .command(...makeFile("command", "name"))
         .command(...makeFile("listener", "event"))
         .command(
           "namespace <name>",
-          "make a namespace",
+          "add a namespace",
           (yargs) => {
             yargs.positional("name", {
               describe: "namespace name",
@@ -428,7 +463,7 @@ yargs(helpers.hideBin(process.argv))
         )
         .command(
           "table <name>",
-          "make a database table",
+          "create a database table",
           (yargs) => {
             yargs.positional("name", {
               describe: "table name",
@@ -518,13 +553,15 @@ yargs(helpers.hideBin(process.argv))
   })
   .help().argv
 
-function makeFile(id: "command" | "listener", arg: string) {
+function makeFile(id: "command" | "listener" | "slash", arg: string) {
+  const name = () => (id === "slash" ? "slash command" : id)
+
   return [
     `${id} <${arg}>`,
-    "create bot " + id,
+    "add a " + name(),
     (yargs: any) => {
       yargs.positional(arg, {
-        describe: id + " " + arg,
+        describe: name() + " " + arg,
       })
       if (id === "listener") {
         yargs.option("name", {
@@ -584,25 +621,25 @@ function makeFile(id: "command" | "listener", arg: string) {
         file = file.replace(`{{ args }}`, args)
       }
 
-      const directory = root("src", id + "s")
+      const directory = root("src", id + id === "slash" ? "" : "s")
 
-      if (!fs.existsSync(directory)) {
-        console.warn(`${id}s directory not exists.`)
-        await fsp.mkdir(directory, { recursive: true })
-
-        console.log(chalk.green(`${id}s directory created.`))
-        console.log(chalk.cyanBright(`=> ${directory}`))
-      }
+      if (!fs.existsSync(directory))
+        return console.error(
+          chalk.red(`The ${directory} directory doesn't exist.`)
+        )
 
       const path = join(directory, filename)
+
       if (fs.existsSync(path))
-        return console.error(chalk.red(`${argv[arg]} ${id} already exists.`))
+        return console.error(
+          chalk.red(`${argv[arg]} ${name()} already exists.`)
+        )
 
       await fsp.writeFile(path, file, "utf8")
 
-      console.log(chalk.green(`\n${argv[arg]} ${id} has been created.`))
+      console.log(chalk.green(`\n${argv[arg]} ${name()} has been created.`))
       console.log(chalk.cyanBright(`=> ${path}`))
       console.timeEnd("duration")
     },
-  ]
+  ] as const
 }
