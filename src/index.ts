@@ -625,11 +625,11 @@ function makeFile(id: "command" | "listener" | "slash", arg: string) {
         file = file.replace(`{{ args }}`, args)
       }
 
-      const directory = root("src", id + id === "slash" ? "" : "s")
+      const directory = root("src", id + (id === "slash" ? "" : "s"))
 
       if (!fs.existsSync(directory))
         return console.error(
-          chalk.red(`The ${directory} directory doesn't exist.`)
+          chalk.red(`The ${chalk.white(directory)} directory doesn't exist.`)
         )
 
       const path = join(directory, filename)
