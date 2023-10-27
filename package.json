@@ -23,10 +23,10 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/GhomKrosmonaute/make-bot.ts.git"
+    "url": "git+https://github.com/bot-ts/cli.git"
   },
   "bugs": {
-    "url": "https://github.com/GhomKrosmonaute/make-bot.ts/issues"
+    "url": "https://github.com/bot-ts/cli/issues"
   },
   "homepage": "https://ghom.gitbook.io/bot-ts/",
   "bin": {
