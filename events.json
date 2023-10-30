@@ -38,7 +38,7 @@
   "messageUpdate": ["oldMessage", "newMessage"],
   "presenceUpdate": ["oldPresence", "newPresence"],
   "rateLimit": "info",
-  "ready": [],
+  "ready": "client",
   "invalidated": [],
   "roleCreate": "role",
   "roleDelete": "role",
@@ -66,5 +66,6 @@
   "threadUpdate": ["oldThread", "newThread"],
   "threadListSync": "threads",
   "threadMembersUpdate": ["oldThreadMembers", "newThreadMembers"],
-  "threadMemberUpdate": ["oldMember", "newMember"]
+  "threadMemberUpdate": ["oldMember", "newMember"],
+  "afterReady": "client"
 }

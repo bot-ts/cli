@@ -5,9 +5,10 @@
   "main": "bin/index.js",
   "scripts": {
     "build": "tsc",
-    "format": "prettier --write src events.json",
+    "format": "prettier --write src events.json update-readme.js",
     "test": "npm run build && npm pack --pack-destination ./pack",
-    "prepublishOnly": "npm run format && tsc"
+    "prepublishOnly": "npm run format && tsc",
+    "readme": "node update-readme.js"
   },
   "prettier": {
     "semi": false
@@ -38,6 +39,7 @@
     "@types/string-similarity": "^4.0.0",
     "@types/ws": "^8.5.3",
     "@types/yargs": "^17.0.10",
+    "axios": "^1.6.0",
     "prettier": "^2.6.2",
     "typescript": "^4.6.4"
   },
