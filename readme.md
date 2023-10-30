@@ -1,5 +1,5 @@
 <div align="center">
-  <h1> @ghom/bot.ts-cli CLI </h1>
+  <h1> @ghom/bot.ts-cli </h1>
   <p> CLI for make Discord bots in TypeScript quickly using <a href="https://github.com/bot-ts/framework">bot-ts/framework</a> template. </p>
   <div>
     <a href="https://ghom.gitbook.io/bot-ts/">
