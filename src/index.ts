@@ -122,7 +122,7 @@ async function isValidRoot(): Promise<boolean> {
   if (
     !conf ||
     !conf.hasOwnProperty("devDependencies") ||
-    !conf.devDependencies.hasOwnProperty("make-bot.ts")
+    !conf.devDependencies.hasOwnProperty("@ghom/bot.ts-cli")
   ) {
     console.error(
       chalk.red(

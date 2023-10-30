@@ -1,6 +1,6 @@
 {
   "name": "@ghom/bot.ts-cli",
-  "version": "7.0.0",
+  "version": "7.0.1",
   "description": "CLI for make Discord bots in TypeScript quickly with discord.js v13.",
   "main": "bin/index.js",
   "scripts": {
@@ -23,10 +23,10 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/GhomKrosmonaute/make-bot.ts.git"
+    "url": "git+https://github.com/bot-ts/cli.git"
   },
   "bugs": {
-    "url": "https://github.com/GhomKrosmonaute/make-bot.ts/issues"
+    "url": "https://github.com/bot-ts/cli/issues"
   },
   "homepage": "https://ghom.gitbook.io/bot-ts/",
   "bin": {
