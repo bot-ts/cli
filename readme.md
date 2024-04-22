@@ -2,7 +2,7 @@
   <h1> @ghom/bot.ts-cli </h1><p> CLI for make Discord bots in TypeScript quickly with discord.js v13. </p>
   <div class="banner">
     <a href="https://ghom.gitbook.io/bot-ts/">
-      <img src="https://media.discordapp.net/attachments/609313381421154304/1168550107239690240/bot.ts_banner.png"/>
+      <img src="https://raw.githubusercontent.com/bot-ts/docs/master/.gitbook/assets/bot.ts-banner.png"/>
     </a>
   </div>
   <div>
