@@ -1,6 +1,6 @@
 {
   "name": "@ghom/bot.ts-cli",
-  "version": "7.0.4",
+  "version": "7.1.0",
   "description": "CLI for make Discord bots in TypeScript quickly with discord.js v14.",
   "main": "bin/index.js",
   "scripts": {
@@ -44,7 +44,7 @@
   "dependencies": {
     "boxen": "=5.1.2",
     "chalk": "=4.1.2",
-    "discord.js": "^14.13.0",
+    "discord.js": "^14.15.2",
     "figlet": "^1.5.2",
     "loading-cli": "^1.1.0",
     "string-similarity": "^4.0.4",

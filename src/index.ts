@@ -83,7 +83,7 @@ async function setupDatabase(
   await writeJSON(join(projectPath, "package.json"), conf)
 
   const template = await fsp.readFile(
-    join(__dirname, "..", "templates", database.database),
+    join(projectPath, "templates", database.database),
     "utf8"
   )
   await fsp.writeFile(
@@ -480,7 +480,7 @@ yargs(helpers.hideBin(process.argv))
             const tablePath = root("src", "tables", args.name + ".ts")
 
             const template = await fsp.readFile(
-              join(__dirname, "..", "templates", "table"),
+              root("templates", "table"),
               "utf8"
             )
             await fsp.writeFile(
@@ -612,10 +612,7 @@ function makeFile(id: "command" | "listener" | "slash", arg: string) {
 
       if (!(await isValidRoot())) return
 
-      const template = await fsp.readFile(
-        join(__dirname, "..", "templates", id),
-        "utf8"
-      )
+      const template = await fsp.readFile(root("templates", id), "utf8")
 
       let file = template.replace(new RegExp(`{{ ${arg} }}`, "g"), argv[arg])
 
