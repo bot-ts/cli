@@ -346,7 +346,7 @@ yargs(helpers.hideBin(process.argv))
 
       await loader(
         "installing",
-        () => exec("npm i", { cwd: project() }),
+        () => exec("npm install --force", { cwd: project() }),
         "installed"
       )
 
