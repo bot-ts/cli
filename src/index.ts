@@ -362,7 +362,7 @@ yargs(helpers.hideBin(process.argv))
             "",
             chalk.grey("# to quickly create a new file"),
             "  " + $ + " bot add command [name]",
-            "  " + $ + " bot add listener [ClientEvent]",
+            "  " + $ + " bot add listener [ClientEvent] [category]",
             "  " + $ + " bot add namespace [name]",
             "  " + $ + " bot add table [name]",
             "",
@@ -415,7 +415,7 @@ yargs(helpers.hideBin(process.argv))
       yargs
         .command(...makeFile("command", "name"))
         .command(...makeFile("slash", "name"))
-        .command(...makeFile("listener", "event"))
+        .command(...makeFile("listener", "event", "category"))
         .command(
           "namespace <name>",
           "add a namespace",
@@ -444,10 +444,10 @@ yargs(helpers.hideBin(process.argv))
             appLines.splice(
               spaceIndex,
               0,
-              `export * from "./namespaces/${args.name}.js"`
+              `export * from "./namespaces/${args.name}.ts"`
             )
             appLines.push(
-              `export * as ${args.name} from "./namespaces/${args.name}.js"`
+              `export * as ${args.name} from "./namespaces/${args.name}.ts"`
             )
 
             await fsp.writeFile(
@@ -504,6 +504,64 @@ yargs(helpers.hideBin(process.argv))
         .demandCommand(1)
     }
   )
+  .command(
+    "remove namespace <name> [--options]",
+    "remove a namespace properly",
+    (yargs) => {
+      yargs.positional("name", {
+        describe: "namespace name",
+        type: "string",
+      })
+    },
+    async (args) => {
+      console.time("duration")
+
+      if (!(await isValidRoot()))
+        return console.error(
+          chalk.red(
+            'you should only use this command at the root of a "bot.ts" project'
+          )
+        )
+
+      const namespacePath = root("src", "namespaces", args.name + ".ts")
+
+      if (!fs.existsSync(namespacePath))
+        return console.error(chalk.red(`${args.name} namespace doesn't exist.`))
+
+      await fsp.unlink(namespacePath)
+
+      console.log(chalk.green(`\n${args.name} namespace has been removed.`))
+
+      const appFile = await fsp.readFile(root("src", "app.ts"), "utf8")
+      const appLines = appFile.split("\n")
+
+      const namespaceIndex = appLines.findIndex((line) =>
+        line.includes(`./namespaces/${args.name}.ts`)
+      )
+
+      const namespaceIndex2 = appLines.findLastIndex((line) =>
+        line.includes(`./namespaces/${args.name}.ts`)
+      )
+
+      if (namespaceIndex === -1 && namespaceIndex2 === -1) {
+        console.log(
+          chalk.green(`${args.name} namespace is not imported in app.ts.`)
+        )
+        console.log(chalk.redBright(`=> ${namespacePath}`))
+        console.timeEnd("duration")
+        return
+      }
+
+      if (namespaceIndex !== -1) appLines.splice(namespaceIndex, 1)
+      if (namespaceIndex2 !== -1) appLines.splice(namespaceIndex2 - 1, 1)
+
+      await fsp.writeFile(root("src", "app.ts"), appLines.join("\n"), "utf8")
+
+      console.log(chalk.green(`${args.name} namespace refs has been removed.`))
+      console.log(chalk.redBright(`=> ${namespacePath}`))
+      console.timeEnd("duration")
+    }
+  )
   .command("set <cmd> [args] [--options]", "set something", (yargs) => {
     yargs.command(
       "database <database>",
@@ -557,28 +615,36 @@ yargs(helpers.hideBin(process.argv))
   .demandCommand(1)
   .help().argv
 
-function makeFile(id: "command" | "listener" | "slash", arg: string) {
+function makeFile(
+  id: "command" | "listener" | "slash",
+  arg: string,
+  arg2?: string
+) {
   const name = () => (id === "slash" ? "slash command" : id)
 
   return [
-    `${id} <${arg}>`,
+    `${id} <${arg}>${arg2 ? ` <${arg2}>` : ""}`,
     "add a " + name(),
     (yargs: any) => {
       yargs.positional(arg, {
         describe: name() + " " + arg,
       })
-      if (id === "listener") {
-        yargs.option("name", {
-          alias: "n",
-          describe: "The name of listener file",
-          default: null,
+      if (arg2) {
+        yargs.positional(arg2, {
+          describe: `The ${arg2} of ${id} file`,
         })
       }
     },
     async (argv: any) => {
       console.time("duration")
 
-      const filename = (argv.name ?? argv[arg]) + ".ts"
+      if (id === "listener" && !argv[arg2!])
+        return console.error(chalk.red("you should give a category name."))
+
+      const filename =
+        id === "listener"
+          ? `${argv[arg2!]}.${argv[arg]}.ts`
+          : (argv.name ?? argv[arg]) + ".ts"
 
       if (arg === "event") {
         if (!argv[arg]) {
@@ -615,6 +681,9 @@ function makeFile(id: "command" | "listener" | "slash", arg: string) {
       const template = await fsp.readFile(root("templates", id), "utf8")
 
       let file = template.replace(new RegExp(`{{ ${arg} }}`, "g"), argv[arg])
+
+      if (arg2)
+        file = file.replace(new RegExp(`{{ ${arg2} }}`, "g"), argv[arg2])
 
       if (arg === "event") {
         let args = events[argv[arg]]
