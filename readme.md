@@ -1,8 +1,8 @@
 <div align="center">
-  <h1> @ghom/bot.ts-cli </h1><p> CLI for make Discord bots in TypeScript quickly with discord.js v13. </p>
+  <h1> @ghom/bot.ts-cli </h1><p> CLI for make Discord bots in TypeScript quickly with discord.js v14. </p>
   <div class="banner">
     <a href="https://ghom.gitbook.io/bot-ts/">
-      <img src="https://raw.githubusercontent.com/bot-ts/docs/master/.gitbook/assets/bot.ts-banner.png"/>
+      <img src="https://raw.githubusercontent.com/bot-ts/docs/master/.gitbook/assets/bot.ts-banner.png" alt="bot.ts banner"/>
     </a>
   </div>
   <div>
@@ -19,7 +19,7 @@
 
 ## What is bot.ts ?
 
-**bot.ts** is a framework for [discord.js](https://discord.js.org/#/) designed in TypeScript for use in TypeScript. This framework includes all the features you need, here is a list:
+**bot.ts** is a framework for <a href='https://discord.js.org/#/'>discord.js</a> designed in TypeScript for use in TypeScript. This framework includes all the features you need, here is a list:
 
 * Basic file handler using [@ghom/handler](https://www.npmjs.com/package/@ghom/handler) package.
 * Advanced CLI to generate files from [@ghom/bot.ts-cli](https://www.npmjs.com/package/@ghom/bot.ts-cli) package.
@@ -47,9 +47,7 @@ Code faster and without the hassle. Choosing **bot.ts** is choosing control.
 ## Annexes
 
 * [Documentation](https://ghom.gitbook.io/bot-ts/)
-* [CLI on NPN](https://www.npmjs.com/package/@ghom/bot.ts-cli)
-* [Discord server](https://discord.gg/3vC2XWK)
-* [use this template](https://github.com/bot-ts/framework/generate)
-* [Follow tool NEWS](https://discord.gg/kYxDWWQJ8q)
-
-![logs](https://media.discordapp.net/attachments/609313381421154304/1168543147593306254/image.png)
+* [Package](https://www.npmjs.com/package/@ghom/bot.ts-cli)
+* [Discord](https://discord.gg/kYxDWWQJ8q)
+* [Github](https://github.com/bot-ts)
+* [Community](https://discord.gg/3vC2XWK)
