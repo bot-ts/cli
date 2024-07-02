@@ -280,6 +280,8 @@ yargs(helpers.hideBin(process.argv))
       const project = (...segments: string[]) =>
         root(args.path, args.name, ...segments)
 
+      let ownerName: string | null = null
+
       await loader(
         "initializing",
         async () => {
@@ -304,19 +306,22 @@ yargs(helpers.hideBin(process.argv))
 
           if (args.token && !args.owner) {
             const app = await client.application.fetch()
-            const ownerID: string =
-              app.owner instanceof discord.User
-                ? app.owner.id
-                : app.owner?.id ?? "none"
+            const owner = app.owner instanceof discord.User ? app.owner : null
 
-            if (ownerID === "none") warns.push("failure to detect bot owner.")
-
-            await injectEnvLine("BOT_OWNER", ownerID, project())
-
-            await client.destroy()
+            if (!owner) warns.push("failure to detect bot owner.")
+            else {
+              ownerName = owner.username
+              await injectEnvLine("BOT_OWNER", owner.id, project())
+            }
           } else if (args.owner) {
             await injectEnvLine("BOT_OWNER", args.owner, project())
+
+            const owner = await client.users.fetch(args.owner)
+
+            ownerName = owner.username
           }
+
+          await client.destroy()
 
           await injectEnvLine("BOT_ID", client.user.id, project())
 
@@ -347,7 +352,11 @@ yargs(helpers.hideBin(process.argv))
           await exec("git remote remove origin", { cwd: project() })
 
           const conf = await readJSON(project("package.json"))
-          await writeJSON(project("package.json"), { ...conf, name: args.name })
+          await writeJSON(project("package.json"), {
+            ...conf,
+            name: args.name,
+            author: ownerName,
+          })
         },
         "finished"
       )
