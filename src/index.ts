@@ -283,15 +283,9 @@ yargs(helpers.hideBin(process.argv))
       await loader(
         "initializing",
         async () => {
-          try {
-            await fsp.unlink(project("update-readme.js"))
-          } catch (error) {}
-
-          const conf = await readJSON(project("package.json"))
-          await writeJSON(project("package.json"), { ...conf, name: args.name })
-
           await fsp.writeFile(project(".env"), "", "utf8")
 
+          await injectEnvLine("BOT_MODE", "development", project())
           await injectEnvLine("BOT_PREFIX", args.prefix, project())
           await injectEnvLine("BOT_LOCALE", args.locale, project())
 
@@ -330,16 +324,6 @@ yargs(helpers.hideBin(process.argv))
             await injectEnvLine("BOT_SECRET", args.secret, project())
 
           await setupDatabase(project(), args)
-
-          await fsp.writeFile(
-            project("readme.md"),
-            `# ${
-              args.name[0].toUpperCase() + args.name.slice(1)
-            } - powered by [bot.ts](https://github.com/bot-ts/framework)`
-          )
-
-          await exec("git fetch --unshallow origin", { cwd: project() })
-          await exec("git remote remove origin", { cwd: project() })
         },
         "initialized"
       )
@@ -348,6 +332,24 @@ yargs(helpers.hideBin(process.argv))
         "installing",
         () => exec("npm install --force", { cwd: project() }),
         "installed"
+      )
+
+      await loader(
+        "finishing",
+        async () => {
+          try {
+            await fsp.unlink(project("update-readme.js"))
+          } catch (error) {}
+
+          await exec("gulp readme", { cwd: project() })
+
+          await exec("git fetch --unshallow origin", { cwd: project() })
+          await exec("git remote remove origin", { cwd: project() })
+
+          const conf = await readJSON(project("package.json"))
+          await writeJSON(project("package.json"), { ...conf, name: args.name })
+        },
+        "finished"
       )
 
       console.log(chalk.green(`\n${args.name} bot has been created.`))
