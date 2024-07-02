@@ -283,15 +283,15 @@ yargs(helpers.hideBin(process.argv))
       await loader(
         "initializing",
         async () => {
+          try {
+            await fsp.unlink(project("update-readme.js"))
+          } catch (error) {}
+
           const conf = await readJSON(project("package.json"))
           await writeJSON(project("package.json"), { ...conf, name: args.name })
 
           await fsp.writeFile(project(".env"), "", "utf8")
 
-          const intents =
-            "GUILDS,GUILD_MEMBERS,GUILD_BANS,GUILD_EMOJIS_AND_STICKERS,GUILD_INTEGRATIONS,GUILD_WEBHOOKS,GUILD_INVITES,GUILD_VOICE_STATES,GUILD_PRESENCES,GUILD_MESSAGES,GUILD_MESSAGE_REACTIONS,GUILD_MESSAGE_TYPING,DIRECT_MESSAGES,DIRECT_MESSAGE_REACTIONS,DIRECT_MESSAGE_TYPING"
-
-          await injectEnvLine("BOT_INTENTS", intents, project())
           await injectEnvLine("BOT_PREFIX", args.prefix, project())
           await injectEnvLine("BOT_LOCALE", args.locale, project())
 
@@ -319,7 +319,7 @@ yargs(helpers.hideBin(process.argv))
 
             await injectEnvLine("BOT_OWNER", ownerID, project())
 
-            client.destroy()
+            await client.destroy()
           } else if (args.owner) {
             await injectEnvLine("BOT_OWNER", args.owner, project())
           }
@@ -359,6 +359,8 @@ yargs(helpers.hideBin(process.argv))
       console.log(
         boxen(
           [
+            chalk.grey("# first, move to the bot directory"),
+            "  " + $ + " cd " + args.name,
             "",
             chalk.grey("# to quickly create a new file"),
             "  " + $ + " bot add command [name]",
