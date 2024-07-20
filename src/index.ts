@@ -290,6 +290,7 @@ yargs(helpers.hideBin(process.argv))
           await injectEnvLine("BOT_MODE", "development", project())
           await injectEnvLine("BOT_PREFIX", args.prefix, project())
           await injectEnvLine("BOT_LOCALE", args.locale, project())
+          await injectEnvLine("BOT_NAME", args.name, project())
 
           const client = new discord.Client<true>({ intents: [] })
           if (args.token) {
