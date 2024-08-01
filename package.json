@@ -1,6 +1,6 @@
 {
   "name": "@ghom/bot.ts-cli",
-  "version": "8.1.0",
+  "version": "8.1.1",
   "description": "CLI for make Discord bots in TypeScript quickly with discord.js v14.",
   "main": "bin/index.js",
   "scripts": {
@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "@types/figlet": "^1.5.4",
-    "@types/node": "^20.8.10",
+    "@types/node": "^22.0.2",
     "@types/string-similarity": "^4.0.0",
     "@types/yargs": "^17.0.10",
     "prettier": "^2.6.2",
@@ -42,7 +42,6 @@
   },
   "dependencies": {
     "boxen": "=5.1.2",
-    "chalk": "=4.1.2",
     "discord.js": "^14.15.2",
     "figlet": "^1.5.2",
     "loading-cli": "^1.1.0",
@@ -50,7 +49,7 @@
     "yargs": "^17.7.1"
   },
   "engines": {
-    "node": ">=18.x.x",
+    "node": ">=22.x.x",
     "npm": ">=9.x.x",
     "git": ">=2.x.x"
   }

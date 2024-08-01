@@ -3,7 +3,7 @@
 import cp from "child_process"
 import fs from "fs"
 import fsp from "fs/promises"
-import chalk from "chalk"
+import util from "util"
 import boxen from "boxen"
 import yargs from "yargs/yargs"
 import discord from "discord.js"
@@ -11,6 +11,7 @@ import ss from "string-similarity"
 import figlet from "figlet"
 import loading from "loading-cli"
 import readline from "readline"
+import { stdin, stdout } from "process"
 import { join } from "path"
 
 const helpers = require("yargs/helpers")
@@ -29,8 +30,10 @@ const root = (...segments: string[]) => join(process.cwd(), ...segments)
 
 async function confirm(question: string) {
   const line = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
+    // @ts-ignore
+    input: stdin,
+    // @ts-ignore
+    output: stdout,
   })
 
   return new Promise((resolve) => {
@@ -58,7 +61,7 @@ async function loader(start: string, callback: () => unknown, end: string) {
     frames: ["◐", "◓", "◑", "◒"],
   }).start()
   await callback()
-  load.succeed(`${end} ${chalk.grey(`${Date.now() - time}ms`)}`)
+  load.succeed(`${end} ${util.styleText("grey", `${Date.now() - time}ms`)}`)
 }
 
 async function setupDatabase(
@@ -125,7 +128,8 @@ async function isValidRoot(): Promise<boolean> {
     !conf.devDependencies.hasOwnProperty("@ghom/bot.ts-cli")
   ) {
     console.error(
-      chalk.red(
+      util.styleText(
+        "red",
         'you should only use this command at the root of a "bot.ts" project'
       )
     )
@@ -217,12 +221,13 @@ yargs(helpers.hideBin(process.argv))
       if (await isNPMProject()) {
         if (
           !(await confirm(
-            `${chalk.yellow(
+            `${util.styleText(
+              "yellow",
               "You are currently in a npm project. Do you want to continue to create a bot here?"
             )} (y/N)`
           ))
         ) {
-          console.log(chalk.red("Aborted."))
+          console.log(util.styleText("red", "Aborted."))
           process.exit(0)
         }
       }
@@ -244,7 +249,8 @@ yargs(helpers.hideBin(process.argv))
 
       console.log(
         boxen(
-          chalk.blueBright(
+          util.styleText(
+            "blueBright",
             await new Promise<string>((resolve) =>
               figlet("bot.ts", (err, value) => {
                 if (err) resolve("")
@@ -297,13 +303,17 @@ yargs(helpers.hideBin(process.argv))
             try {
               await client.login(args.token)
             } catch (error) {
-              return console.error(chalk.red(`Invalid token given.`))
+              return console.error(
+                util.styleText("red", `Invalid token given.`)
+              )
             }
             await injectEnvLine("BOT_TOKEN", args.token, project())
           }
 
           if (!client.isReady())
-            return console.error(chalk.red("Discord Client connection error"))
+            return console.error(
+              util.styleText("red", "Discord Client connection error")
+            )
 
           if (args.token && !args.owner) {
             const app = await client.application.fetch()
@@ -362,37 +372,45 @@ yargs(helpers.hideBin(process.argv))
         "finished"
       )
 
-      console.log(chalk.green(`\n${args.name} bot has been created.`))
-      console.log(chalk.cyanBright(`=> ${project()}`))
+      console.log(
+        util.styleText("green", `\n${args.name} bot has been created.`)
+      )
+      console.log(util.styleText("cyanBright", `=> ${project()}`))
       console.timeEnd("duration")
 
-      const $ = chalk.grey("$")
+      const $ = util.styleText("grey", "$")
 
       console.log(
         boxen(
           [
-            chalk.grey("# first, move to the bot directory"),
+            util.styleText("grey", "# first, move to the bot directory"),
             "  " + $ + " cd " + args.name,
             "",
-            chalk.grey("# to quickly create a new file"),
+            util.styleText("grey", "# to quickly create a new file"),
             "  " + $ + " bot add command [name]",
             "  " + $ + " bot add listener [ClientEvent] [category]",
             "  " + $ + " bot add namespace [name]",
             "  " + $ + " bot add table [name]",
             "",
-            chalk.grey("# to change databse client"),
+            util.styleText("grey", "# to change databse client"),
             "  " + $ + " bot set database [slite3|mysql2|pg]",
             "",
-            chalk.grey("# to watch typescript and reload " + args.name),
+            util.styleText(
+              "grey",
+              "# to watch typescript and reload " + args.name
+            ),
             "  " + $ + " npm run watch",
             "",
-            chalk.grey("# to build typescript and start " + args.name),
+            util.styleText(
+              "grey",
+              "# to build typescript and start " + args.name
+            ),
             "  " + $ + " npm run start",
             "",
-            chalk.grey("# to simply start " + args.name),
+            util.styleText("grey", "# to simply start " + args.name),
             "  " + $ + " node .",
             "",
-            chalk.grey("# format your files with prettier"),
+            util.styleText("grey", "# format your files with prettier"),
             "  " + $ + " npm run format",
             "",
           ].join("\n"),
@@ -407,9 +425,10 @@ yargs(helpers.hideBin(process.argv))
 
       console.log(
         boxen(
-          `Check the validity of the ${chalk.blueBright(
+          `Check the validity of the ${util.styleText(
+            "blueBright",
             ".env"
-          )} information. ${chalk.green("Enjoy!")}`,
+          )} information. ${util.styleText("green", "Enjoy!")}`,
           {
             borderStyle: "round",
             borderColor: "yellow",
@@ -471,9 +490,12 @@ yargs(helpers.hideBin(process.argv))
             )
 
             console.log(
-              chalk.green(`\n${args.name} namespace has been created.`)
+              util.styleText(
+                "green",
+                `\n${args.name} namespace has been created.`
+              )
             )
-            console.log(chalk.cyanBright(`=> ${namespacePath}`))
+            console.log(util.styleText("cyanBright", `=> ${namespacePath}`))
             console.timeEnd("duration")
           }
         )
@@ -510,8 +532,10 @@ yargs(helpers.hideBin(process.argv))
               "utf8"
             )
 
-            console.log(chalk.green(`\n${args.name} table has been created.`))
-            console.log(chalk.cyanBright(`=> ${tablePath}`))
+            console.log(
+              util.styleText("green", `\n${args.name} table has been created.`)
+            )
+            console.log(util.styleText("cyanBright", `=> ${tablePath}`))
             console.timeEnd("duration")
           }
         )
@@ -532,7 +556,8 @@ yargs(helpers.hideBin(process.argv))
 
       if (!(await isValidRoot()))
         return console.error(
-          chalk.red(
+          util.styleText(
+            "red",
             'you should only use this command at the root of a "bot.ts" project'
           )
         )
@@ -540,11 +565,15 @@ yargs(helpers.hideBin(process.argv))
       const namespacePath = root("src", "namespaces", args.name + ".ts")
 
       if (!fs.existsSync(namespacePath))
-        return console.error(chalk.red(`${args.name} namespace doesn't exist.`))
+        return console.error(
+          util.styleText("red", `${args.name} namespace doesn't exist.`)
+        )
 
       await fsp.unlink(namespacePath)
 
-      console.log(chalk.green(`\n${args.name} namespace has been removed.`))
+      console.log(
+        util.styleText("green", `\n${args.name} namespace has been removed.`)
+      )
 
       const appFile = await fsp.readFile(root("src", "app.ts"), "utf8")
       const appLines = appFile.split("\n")
@@ -559,9 +588,12 @@ yargs(helpers.hideBin(process.argv))
 
       if (namespaceIndex === -1 && namespaceIndex2 === -1) {
         console.log(
-          chalk.green(`${args.name} namespace is not imported in app.ts.`)
+          util.styleText(
+            "green",
+            `${args.name} namespace is not imported in app.ts.`
+          )
         )
-        console.log(chalk.redBright(`=> ${namespacePath}`))
+        console.log(util.styleText("redBright", `=> ${namespacePath}`))
         console.timeEnd("duration")
         return
       }
@@ -571,8 +603,10 @@ yargs(helpers.hideBin(process.argv))
 
       await fsp.writeFile(root("src", "app.ts"), appLines.join("\n"), "utf8")
 
-      console.log(chalk.green(`${args.name} namespace refs has been removed.`))
-      console.log(chalk.redBright(`=> ${namespacePath}`))
+      console.log(
+        util.styleText("green", `${args.name} namespace refs has been removed.`)
+      )
+      console.log(util.styleText("redBright", `=> ${namespacePath}`))
       console.timeEnd("duration")
     }
   )
@@ -619,9 +653,17 @@ yargs(helpers.hideBin(process.argv))
         await setupDatabase(root(), args)
 
         console.log(
-          chalk.green(`\n${args.database} database has been created.`)
+          util.styleText(
+            "green",
+            `\n${args.database} database has been created.`
+          )
         )
-        console.log(chalk.cyanBright(`=> ${root("src", "app", "database.ts")}`))
+        console.log(
+          util.styleText(
+            "cyanBright",
+            `=> ${root("src", "app", "database.ts")}`
+          )
+        )
         console.timeEnd("duration")
       }
     )
@@ -653,7 +695,9 @@ function makeFile(
       console.time("duration")
 
       if (id === "listener" && !argv[arg2!])
-        return console.error(chalk.red("you should give a category name."))
+        return console.error(
+          util.styleText("red", "you should give a category name.")
+        )
 
       const filename =
         id === "listener"
@@ -663,7 +707,10 @@ function makeFile(
       if (arg === "event") {
         if (!argv[arg]) {
           return console.error(
-            chalk.red("you should give a Discord Client event name.")
+            util.styleText(
+              "red",
+              "you should give a Discord Client event name."
+            )
           )
         }
 
@@ -675,7 +722,10 @@ function makeFile(
           argv[arg] = event
         } else {
           console.error(
-            chalk.red("you should give a valid Discord Client event name.")
+            util.styleText(
+              "red",
+              "you should give a valid Discord Client event name."
+            )
           )
           for (const event of Object.keys(events)) {
             const similarity = ss.compareTwoStrings(
@@ -683,7 +733,9 @@ function makeFile(
               argv[arg].toLowerCase()
             )
             if (similarity > 0.75) {
-              console.log(`Did you mean ${chalk.cyanBright(event)} instead?`)
+              console.log(
+                `Did you mean ${util.styleText("cyanBright", event)} instead?`
+              )
             }
           }
           return
@@ -709,20 +761,25 @@ function makeFile(
 
       if (!fs.existsSync(directory))
         return console.error(
-          chalk.red(`The ${chalk.white(directory)} directory doesn't exist.`)
+          util.styleText(
+            "red",
+            `The ${util.styleText("white", directory)} directory doesn't exist.`
+          )
         )
 
       const path = join(directory, filename)
 
       if (fs.existsSync(path))
         return console.error(
-          chalk.red(`${argv[arg]} ${name()} already exists.`)
+          util.styleText("red", `${argv[arg]} ${name()} already exists.`)
         )
 
       await fsp.writeFile(path, file, "utf8")
 
-      console.log(chalk.green(`\n${argv[arg]} ${name()} has been created.`))
-      console.log(chalk.cyanBright(`=> ${path}`))
+      console.log(
+        util.styleText("green", `\n${argv[arg]} ${name()} has been created.`)
+      )
+      console.log(util.styleText("cyanBright", `=> ${path}`))
       console.timeEnd("duration")
     },
   ] as const
