@@ -449,7 +449,7 @@ yargs(helpers.hideBin(process.argv))
         .command(...makeFile("command", "name"))
         .command(...makeFile("slash", "name"))
         .command(...makeFile("listener", "event", "category"))
-        .command(
+        .command<{ name: string }>(
           "namespace <name>",
           "add a namespace",
           (yargs) => {
@@ -461,7 +461,28 @@ yargs(helpers.hideBin(process.argv))
           async (args) => {
             console.time("duration")
 
-            if (!(await isValidRoot())) return
+            if (!(await isValidRoot()))
+              return console.error(
+                util.styleText(
+                  "red",
+                  'you should only use this command at the root of a "bot.ts" project'
+                )
+              )
+
+            if (/[\\\/]/.test(args.name))
+              return console.error(
+                util.styleText(
+                  "red",
+                  "namespace name cannot contain path separators."
+                )
+              )
+
+            const lowerCamelCaseName = args.name.replace(
+              /\.([a-z])/gi,
+              (_, letter) => {
+                return letter.toUpperCase()
+              }
+            )
 
             const namespacePath = root("src", "namespaces", args.name + ".ts")
 
@@ -480,7 +501,7 @@ yargs(helpers.hideBin(process.argv))
               `export * from "./namespaces/${args.name}.ts"`
             )
             appLines.push(
-              `export * as ${args.name} from "./namespaces/${args.name}.ts"`
+              `export * as ${lowerCamelCaseName} from "./namespaces/${args.name}.ts"`
             )
 
             await fsp.writeFile(
@@ -494,6 +515,12 @@ yargs(helpers.hideBin(process.argv))
                 "green",
                 `\n${args.name} namespace has been created.`
               )
+            )
+            console.log(
+              `It can be accessible as: ${util.styleText(
+                "italic",
+                `app.${lowerCamelCaseName}`
+              )}`
             )
             console.log(util.styleText("cyanBright", `=> ${namespacePath}`))
             console.timeEnd("duration")
@@ -694,6 +721,30 @@ function makeFile(
     async (argv: any) => {
       console.time("duration")
 
+      if (!(await isValidRoot()))
+        return console.error(
+          util.styleText(
+            "red",
+            'you should only use this command at the root of a "bot.ts" project'
+          )
+        )
+
+      if (/[\\\/]/.test(argv.arg))
+        return console.error(
+          util.styleText(
+            "red",
+            `${name()} ${arg} cannot contain path separators.`
+          )
+        )
+
+      if (/[\\\/]/.test(argv.arg2))
+        return console.error(
+          util.styleText(
+            "red",
+            `${name()} ${arg2} cannot contain path separators.`
+          )
+        )
+
       if (id === "listener" && !argv[arg2!])
         return console.error(
           util.styleText("red", "you should give a category name.")
@@ -741,8 +792,6 @@ function makeFile(
           return
         }
       }
-
-      if (!(await isValidRoot())) return
 
       const template = await fsp.readFile(root("templates", id), "utf8")
 
