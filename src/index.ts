@@ -357,8 +357,6 @@ yargs(helpers.hideBin(process.argv))
             await fsp.unlink(project("update-readme.js"))
           } catch (error) {}
 
-          await exec("gulp readme", { cwd: project() })
-
           await exec("git fetch --unshallow origin", { cwd: project() })
           await exec("git remote remove origin", { cwd: project() })
 
@@ -368,6 +366,12 @@ yargs(helpers.hideBin(process.argv))
             name: args.name,
             author: ownerName,
           })
+
+          try {
+            await exec("npm run readme", { cwd: project() })
+          } catch (error) {
+            warns.push("failure to generate README.md")
+          }
         },
         "finished"
       )
