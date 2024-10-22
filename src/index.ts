@@ -379,7 +379,7 @@ yargs(helpers.hideBin(process.argv))
       console.log(
         util.styleText("green", `\n${args.name} bot has been created.`)
       )
-      console.log(util.styleText("cyanBright", `=> ${project()}`))
+      console.log(util.styleText("cyanBright", `=> ${project()}\n`))
       console.timeEnd("duration")
 
       const $ = util.styleText("grey", "$")
@@ -450,6 +450,7 @@ yargs(helpers.hideBin(process.argv))
     "add a command, listener, namespace or table",
     (yargs) => {
       yargs
+        .command(...makeFile("button", "name"))
         .command(...makeFile("command", "name"))
         .command(...makeFile("slash", "name"))
         .command(...makeFile("listener", "event", "category"))
@@ -526,7 +527,7 @@ yargs(helpers.hideBin(process.argv))
                 `app.${lowerCamelCaseName}`
               )}`
             )
-            console.log(util.styleText("cyanBright", `=> ${namespacePath}`))
+            console.log(util.styleText("cyanBright", `=> ${namespacePath}\n`))
             console.timeEnd("duration")
           }
         )
@@ -566,7 +567,7 @@ yargs(helpers.hideBin(process.argv))
             console.log(
               util.styleText("green", `\n${args.name} table has been created.`)
             )
-            console.log(util.styleText("cyanBright", `=> ${tablePath}`))
+            console.log(util.styleText("cyanBright", `=> ${tablePath}\n`))
             console.timeEnd("duration")
           }
         )
@@ -692,7 +693,7 @@ yargs(helpers.hideBin(process.argv))
         console.log(
           util.styleText(
             "cyanBright",
-            `=> ${root("src", "app", "database.ts")}`
+            `=> ${root("src", "app", "database.ts")}\n`
           )
         )
         console.timeEnd("duration")
@@ -703,7 +704,7 @@ yargs(helpers.hideBin(process.argv))
   .help().argv
 
 function makeFile(
-  id: "command" | "listener" | "slash",
+  id: "command" | "button" | "listener" | "slash",
   arg: string,
   arg2?: string
 ) {
@@ -789,7 +790,7 @@ function makeFile(
             )
             if (similarity > 0.75) {
               console.log(
-                `Did you mean ${util.styleText("cyanBright", event)} instead?`
+                `Did you mean ${util.styleText("cyanBright", event)} instead?\n`
               )
             }
           }
@@ -798,8 +799,14 @@ function makeFile(
       }
 
       const template = await fsp.readFile(root("templates", id), "utf8")
+      const capitalize = (t: string) => t[0].toUpperCase() + t.slice(1)
 
-      let file = template.replace(new RegExp(`{{ ${arg} }}`, "g"), argv[arg])
+      let file = template
+        .replace(new RegExp(`{{ ${arg} }}`, "g"), argv[arg])
+        .replace(
+          new RegExp(`{{ ${capitalize(arg)} }}`, "g"),
+          capitalize(argv[arg])
+        )
 
       if (arg2)
         file = file.replace(new RegExp(`{{ ${arg2} }}`, "g"), argv[arg2])
@@ -832,7 +839,7 @@ function makeFile(
       console.log(
         util.styleText("green", `\n${argv[arg]} ${name()} has been created.`)
       )
-      console.log(util.styleText("cyanBright", `=> ${path}`))
+      console.log(util.styleText("cyanBright", `=> ${path}`), "\n")
       console.timeEnd("duration")
     },
   ] as const
