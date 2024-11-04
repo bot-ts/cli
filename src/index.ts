@@ -450,6 +450,7 @@ yargs(helpers.hideBin(process.argv))
     "add a command, listener, namespace or table",
     (yargs) => {
       yargs
+        .command(...makeFile("cron", "name"))
         .command(...makeFile("button", "name"))
         .command(...makeFile("command", "name"))
         .command(...makeFile("slash", "name"))
@@ -704,7 +705,7 @@ yargs(helpers.hideBin(process.argv))
   .help().argv
 
 function makeFile(
-  id: "command" | "button" | "listener" | "slash",
+  id: "command" | "button" | "listener" | "slash" | "cron",
   arg: string,
   arg2?: string
 ) {
