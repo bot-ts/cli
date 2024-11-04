@@ -818,7 +818,10 @@ function makeFile(
         file = file.replace(`{{ args }}`, args)
       }
 
-      const directory = root("src", id + (id === "slash" ? "" : "s"))
+      const directory = root(
+        "src",
+        id + (id === "slash" || id === "cron" ? "" : "s")
+      )
 
       if (!fs.existsSync(directory))
         return console.error(
