@@ -36,21 +36,21 @@
     "@types/figlet": "^1.5.4",
     "@types/node": "^22.0.2",
     "@types/string-similarity": "^4.0.0",
-    "@types/yargs": "^17.0.10",
     "prettier": "^2.6.2",
+    "types-package-json": "^2.0.39",
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "@inquirer/prompts": "^7.0.1",
     "boxen": "=5.1.2",
+    "commander": "^12.1.0",
     "discord.js": "^14.15.2",
     "figlet": "^1.5.2",
     "loading-cli": "^1.1.0",
-    "string-similarity": "^4.0.4",
-    "yargs": "^17.7.1"
+    "string-similarity": "^4.0.4"
   },
   "engines": {
     "node": ">=22.x.x",
-    "npm": ">=9.x.x",
-    "git": ">=2.x.x"
+    "npm": ">=9.x.x"
   }
 }
