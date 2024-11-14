@@ -3,6 +3,7 @@
   "version": "9.0.0",
   "description": "CLI for make Discord bots in TypeScript quickly with discord.js v14.",
   "main": "bin/index.js",
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "format": "prettier --write src events.json update-readme.js",
@@ -33,6 +34,7 @@
     "bot": "./bin/index.js"
   },
   "devDependencies": {
+    "@types/ejs": "^3.1.5",
     "@types/figlet": "^1.5.4",
     "@types/node": "^22.0.2",
     "@types/string-similarity": "^4.0.0",
@@ -45,7 +47,9 @@
     "boxen": "=5.1.2",
     "commander": "^12.1.0",
     "discord.js": "^14.15.2",
+    "ejs": "^3.1.10",
     "figlet": "^1.5.2",
+    "inquirer": "^12.1.0",
     "loading-cli": "^1.1.0",
     "string-similarity": "^4.0.4"
   },

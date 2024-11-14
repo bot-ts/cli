@@ -8,7 +8,13 @@ import path from "path"
 import readline from "readline"
 import ss from "string-similarity"
 import { PackageJson } from "types-package-json"
+import url from "url"
 import util from "util"
+
+const dirname = path.dirname(url.fileURLToPath(import.meta.url))
+
+export const root = (...segments: string[]) =>
+  path.join(dirname, "..", ...segments)
 
 export const cwd = (...segments: string[]) =>
   path.join(process.cwd(), ...segments)
@@ -72,12 +78,16 @@ export async function confirm(question: string) {
   })
 }
 
-export async function readJSON<T>(srcPath: string): Promise<T> {
-  return JSON.parse(await fsp.readFile(srcPath, "utf8"))
+export function readJSON<T>(srcPath: string): T {
+  return JSON.parse(fs.readFileSync(srcPath, "utf8"))
 }
 
-export async function writeJSON(destPath: string, json: any) {
-  await fsp.writeFile(destPath, JSON.stringify(json, null, 2), "utf8")
+export function writeJSON(destPath: string, json: any) {
+  fs.writeFileSync(destPath, JSON.stringify(json, null, 2), "utf8")
+}
+
+export function capitalize(str: string) {
+  return str[0].toUpperCase() + str.slice(1)
 }
 
 export async function loader(
