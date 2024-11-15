@@ -7,7 +7,9 @@ import { styleText } from "util"
 import { cwd, format } from "../../util"
 
 export const command = new Command("namespace")
-  .description("add a namespace")
+  .description(
+    "Add a namespace\nMore info: https://ghom.gitbook.io/bot.ts/usage/create-a-namespace"
+  )
   .action(async () => {
     const { name, importCore } = await inquirer.prompt([
       {

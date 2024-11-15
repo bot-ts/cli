@@ -7,7 +7,9 @@ import { styleText } from "util"
 import { cwd, format, readJSON, root } from "../../util"
 
 export const command = new Command("listener")
-  .description("add a listener")
+  .description(
+    "Add a listener\nMore info: https://ghom.gitbook.io/bot.ts/usage/create-a-listener"
+  )
   .action(async () => {
     const events = readJSON<Record<string, string | string[]>>(
       root("events.json")

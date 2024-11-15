@@ -8,16 +8,15 @@ import { command as slash } from "./add/slash"
 import { command as table } from "./add/table"
 
 export const command = new Command("add")
-  .description(
-    "add a command, listener, namespace, button, slash command or table"
-  )
-  .addCommand(cron)
-  .addCommand(button)
+  .aliases(["generate"])
+  .description("Generate a bot component")
   .addCommand(cmd)
   .addCommand(slash)
   .addCommand(listener)
-  .addCommand(namespace)
   .addCommand(table)
+  .addCommand(cron)
+  .addCommand(button)
+  .addCommand(namespace)
 
 // .command(
 //   "add <cmd> [args] [--options]",

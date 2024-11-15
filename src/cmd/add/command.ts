@@ -7,7 +7,9 @@ import { styleText } from "util"
 import { cwd, format } from "../../util"
 
 export const command = new Command("command")
-  .description("add a command")
+  .description(
+    "Add a command\nMore info: https://ghom.gitbook.io/bot.ts/usage/create-a-command"
+  )
   .action(async () => {
     const { name, description, channelType, botOwnerOnly } =
       await inquirer.prompt([

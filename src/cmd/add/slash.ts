@@ -7,7 +7,9 @@ import { styleText } from "util"
 import { cwd, format } from "../../util"
 
 export const command = new Command("slash")
-  .description("add a slash command")
+  .description(
+    "Add a slash command\nMore info: https://ghom.gitbook.io/bot.ts/usage/create-a-command#slash-commands"
+  )
   .action(async () => {
     const { name, description, guildOnly, botOwnerOnly, withSubs } =
       await inquirer.prompt([

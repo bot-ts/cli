@@ -7,7 +7,9 @@ import { styleText } from "util"
 import { capitalize, cwd, format } from "../../util"
 
 export const command = new Command("cron")
-  .description("add a cron job")
+  .description(
+    "Add a cron job\nMore info: https://ghom.gitbook.io/bot.ts/usage/create-a-cron"
+  )
   .action(async () => {
     const { name, description, scheduleType } = await inquirer.prompt([
       {

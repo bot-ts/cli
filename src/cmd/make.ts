@@ -10,6 +10,7 @@ import {
   injectEnvLine,
   isNodeLikeProject,
   loader,
+  promptDatabase,
   readJSON,
   setupDatabase,
   setupScripts,
@@ -18,7 +19,7 @@ import {
 
 export const command = new Command("make")
   .aliases(["create", "new"])
-  .description("create typescript bot")
+  .description("Generate a typescript bot")
   .action(async () => {
     // base config
     const base = await inquirer.prompt([
@@ -129,54 +130,7 @@ export const command = new Command("make")
     ])
 
     // database
-    const { client } = await inquirer.prompt([
-      {
-        type: "list",
-        name: "client",
-        message: "Select the database client",
-        choices: [
-          { value: "sqlite3", name: "SQLite" },
-          { value: "pg", name: "PostgreSQL" },
-          { value: "mysql2", name: "MySQL" },
-        ],
-        default: "sqlite3",
-      },
-    ])
-
-    let database: Record<string, string> = {}
-
-    if (client !== "sqlite3") {
-      database = await inquirer.prompt([
-        {
-          type: "input",
-          name: "host",
-          message: "Enter the database host",
-          default: "127.0.0.1",
-        },
-        {
-          type: "input",
-          name: "port",
-          message: "Enter the database port",
-          default: client === "pg" ? "5432" : "3306",
-        },
-        {
-          type: "input",
-          name: "user",
-          message: "Enter the database user",
-          default: client === "pg" ? "postgres" : "root",
-        },
-        {
-          type: "password",
-          name: "password",
-          message: "Enter the database password",
-        },
-        {
-          type: "input",
-          name: "database",
-          message: "Enter the database/schema name",
-        },
-      ])
-    }
+    const { database, client } = await promptDatabase()
 
     const { confirm } = await inquirer.prompt([
       {
@@ -291,9 +245,10 @@ export const command = new Command("make")
           stdio: ["ignore", "ignore", "pipe"],
         })
 
-        const conf = await readJSON<PackageJson>(project("package.json"))
+        const packageJson = await readJSON<PackageJson>(project("package.json"))
+
         writeJSON(project("package.json"), {
-          ...conf,
+          ...packageJson,
           name: base.name,
           author: app.owner!.username,
         })

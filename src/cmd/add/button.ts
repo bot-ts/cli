@@ -7,7 +7,9 @@ import { styleText } from "util"
 import { capitalize, cwd, format } from "../../util"
 
 export const command = new Command("button")
-  .description("add a button")
+  .description(
+    "Add a button\nMore info: https://ghom.gitbook.io/bot.ts/usage/create-a-button"
+  )
   .action(async () => {
     const { name, description, label } = await inquirer.prompt([
       {

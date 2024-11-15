@@ -7,7 +7,9 @@ import { styleText } from "util"
 import { cwd, format } from "../../util"
 
 export const command = new Command("table")
-  .description("add a database table")
+  .description(
+    "Add a database table\nMore info: https://ghom.gitbook.io/bot.ts/usage/use-database#create-a-table"
+  )
   .action(async () => {
     const types = [
       "string",

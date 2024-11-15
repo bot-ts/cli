@@ -4,6 +4,7 @@ import cp from "child_process"
 import ejs from "ejs"
 import fs from "fs"
 import fsp from "fs/promises"
+import inquirer from "inquirer"
 import loading from "loading-cli"
 import path from "path"
 import prettier from "prettier"
@@ -24,27 +25,41 @@ export function isNodeLikeProject(projectPath = cwd()): boolean {
   return fs.existsSync(path.join(projectPath, "package.json"))
 }
 
-export async function isBotTsProject(): Promise<boolean> {
-  let conf = null
+export function isBotTsProject(): boolean {
+  let packageJson: PackageJson
 
   try {
-    conf = require(cwd("package.json"))
-  } catch {}
-
-  if (
-    !conf ||
-    !conf.hasOwnProperty("devDependencies") ||
-    !conf.devDependencies.hasOwnProperty("@ghom/bot.ts-cli")
-  ) {
+    packageJson = readJSON<PackageJson>(cwd("package.json"))
+  } catch {
     console.error(
       util.styleText(
         "red",
-        'you should only use this command at the root of a "bot.ts" project'
+        'You should only use this command at the root of a "bot.ts" project'
+      )
+    )
+    return false
+  }
+
+  if (!packageJson.devDependencies?.hasOwnProperty("@ghom/bot.ts-cli")) {
+    console.error(
+      util.styleText(
+        "red",
+        'This project does not seem to be a "bot.ts" project'
       )
     )
     return false
   }
   return true
+}
+
+export function getDatabaseDriverName(packageJson: PackageJson) {
+  if (packageJson?.dependencies?.["pg"]) {
+    return "pg"
+  } else if (packageJson?.dependencies?.["mysql2"]) {
+    return "mysql2"
+  } else if (packageJson?.dependencies?.["sqlite3"]) {
+    return "sqlite3"
+  } else throw new Error("No database driver found in package.json")
 }
 
 export async function fetchGenmap() {
@@ -129,6 +144,65 @@ export function format(str: string) {
     semi: false,
     endOfLine: "crlf",
   })
+}
+
+export async function promptDatabase() {
+  const { client } = await inquirer.prompt([
+    {
+      type: "list",
+      name: "client",
+      message: "Select the database client",
+      choices: [
+        { value: "sqlite3", name: "SQLite" },
+        { value: "pg", name: "PostgreSQL" },
+        { value: "mysql2", name: "MySQL" },
+      ],
+      default: "sqlite3",
+    },
+  ])
+
+  let database: {
+    host?: string
+    port?: string
+    password?: string
+    user?: string
+    database?: string
+  } = {}
+
+  if (client !== "sqlite3") {
+    database = await inquirer.prompt([
+      {
+        type: "input",
+        name: "host",
+        message: "Enter the database host",
+        default: "127.0.0.1",
+      },
+      {
+        type: "input",
+        name: "port",
+        message: "Enter the database port",
+        default: client === "pg" ? "5432" : "3306",
+      },
+      {
+        type: "input",
+        name: "user",
+        message: "Enter the database user",
+        default: client === "pg" ? "postgres" : "root",
+      },
+      {
+        type: "password",
+        name: "password",
+        message: "Enter the database password",
+      },
+      {
+        type: "input",
+        name: "database",
+        message: "Enter the database/schema name",
+      },
+    ])
+  }
+
+  return { database, client }
 }
 
 export async function setupDatabase(
