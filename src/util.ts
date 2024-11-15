@@ -113,13 +113,18 @@ export async function loader(
 ) {
   const time = Date.now()
   const load = loading({
-    text: start,
+    text: util.styleText("bold", start),
     interval: 150,
     color: "white",
     frames: ["◐", "◓", "◑", "◒"],
   }).start()
   await callback()
-  load.succeed(`${end} ${util.styleText("grey", `${Date.now() - time}ms`)}`)
+  load.succeed(
+    `${util.styleText("bold", end)} ${util.styleText(
+      "grey",
+      `${Date.now() - time}ms`
+    )}`
+  )
 }
 
 export async function injectEnvLine(
@@ -205,6 +210,38 @@ export async function promptDatabase() {
   return { database, client }
 }
 
+export async function promptEngine() {
+  const { runtime } = await inquirer.prompt([
+    {
+      type: "list",
+      name: "runtime",
+      message: "Select the JavaScript runtime",
+      choices: [
+        { value: "node", name: "Node.js" },
+        { value: "deno", name: "Deno" },
+        { value: "bun", name: "Bun (recommended)" },
+      ],
+      default: "node",
+    },
+  ])
+
+  let list = ["npm", "yarn", "pnpm"]
+
+  if (runtime !== "node") list.unshift(runtime)
+
+  const { packageManager } = await inquirer.prompt([
+    {
+      type: "list",
+      name: "packageManager",
+      message: "Select the package manager",
+      choices: list,
+      default: list[0],
+    },
+  ])
+
+  return { runtime, packageManager }
+}
+
 export async function setupDatabase(
   database: {
     client: string
@@ -234,7 +271,7 @@ export async function setupDatabase(
   )
 
   await fsp.writeFile(
-    path.join(projectPath, "src", "app", "database.ts"),
+    path.join(projectPath, "src", "core", "database.ts"),
     format(
       ejs.compile(template)({
         client: database.client,
@@ -250,6 +287,18 @@ export async function setupDatabase(
     await injectEnvLine("DB_PASSWORD", database.password, projectPath)
   if (database.database)
     await injectEnvLine("DB_DATABASE", database.database, projectPath)
+}
+
+export async function setupEngine(
+  config: {
+    runtime: string
+    packageManager: string
+  },
+  projectPath = cwd()
+) {
+  await injectEnvLine("RUNTIME", config.runtime, projectPath)
+  await injectEnvLine("PACKAGE_MANAGER", config.packageManager, projectPath)
+  return await setupScripts(config, projectPath)
 }
 
 /**
@@ -286,7 +335,7 @@ export async function setupScripts(
 
   const replaceTags = (template: string) => {
     return template.replace(/{([a-z-]+)}/g, (_, tag) => {
-      if ("note" in components[tag]) {
+      if ("node" in components[tag]) {
         return components[tag][config.runtime]
       } else {
         return components[tag][config.packageManager]

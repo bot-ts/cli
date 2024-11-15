@@ -4,13 +4,16 @@ import fs from "fs"
 import inquirer from "inquirer"
 import path from "path"
 import { styleText } from "util"
-import { cwd, format } from "../../util"
+import { cwd, format, isBotTsProject } from "../../util"
 
 export const command = new Command("slash")
   .description(
     "Add a slash command\nMore info: https://ghom.gitbook.io/bot.ts/usage/create-a-command#slash-commands"
   )
+  .usage("[--options]")
   .action(async () => {
+    if (!isBotTsProject()) return process.exit(1)
+
     const { name, description, guildOnly, botOwnerOnly, withSubs } =
       await inquirer.prompt([
         {

@@ -4,13 +4,16 @@ import fs from "fs"
 import inquirer from "inquirer"
 import path from "path"
 import { styleText } from "util"
-import { cwd, format, readJSON, root } from "../../util"
+import { cwd, format, isBotTsProject, readJSON, root } from "../../util"
 
 export const command = new Command("listener")
   .description(
     "Add a listener\nMore info: https://ghom.gitbook.io/bot.ts/usage/create-a-listener"
   )
+  .usage("[--options]")
   .action(async () => {
+    if (!isBotTsProject()) return process.exit(1)
+
     const events = readJSON<Record<string, string | string[]>>(
       root("events.json")
     )

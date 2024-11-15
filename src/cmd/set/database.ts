@@ -15,10 +15,10 @@ import {
 } from "../../util"
 
 export const command = new Command("database")
-  .aliases(["db"])
   .description(
     "Setup database\nMore info: https://ghom.gitbook.io/bot.ts/usage/use-database"
   )
+  .usage("[--options]")
   .action(async () => {
     if (!isBotTsProject()) return process.exit(1)
 

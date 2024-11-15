@@ -3,12 +3,16 @@
   "version": "9.0.0",
   "description": "CLI for make Discord bots in TypeScript quickly with discord.js v14.",
   "main": "bin/index.js",
-  "type": "module",
+  "bin": {
+    "bot": "./bin/index.js"
+  },
+  "type": "commonjs",
   "scripts": {
-    "build": "tsc",
+    "build": "rollup -c",
+    "start": "node bin/index.js",
     "format": "prettier --write src events.json update-readme.js",
     "test": "npm run build && npm pack --pack-destination ./pack",
-    "prepublishOnly": "npm run format && tsc"
+    "prepublishOnly": "npm run format && npm run build"
   },
   "prettier": {
     "semi": false
@@ -30,9 +34,6 @@
     "url": "https://github.com/bot-ts/cli/issues"
   },
   "homepage": "https://ghom.gitbook.io/bot-ts/",
-  "bin": {
-    "bot": "./bin/index.js"
-  },
   "dependencies": {
     "@inquirer/prompts": "^7.0.1",
     "boxen": "=5.1.2",
@@ -46,12 +47,13 @@
     "prettier": "^2.6.2"
   },
   "devDependencies": {
+    "@rollup/plugin-typescript": "^12.1.1",
     "@types/ejs": "^3.1.5",
     "@types/figlet": "1.7.0",
-    "@types/node": "^22.0.2",
     "@types/prettier": "^2.7.3",
+    "rollup": "^4.27.2",
     "types-package-json": "^2.0.39",
-    "typescript": "^5.2.2"
+    "typescript": "^5.6.3"
   },
   "engines": {
     "node": ">=22.x.x"

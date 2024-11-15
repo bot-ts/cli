@@ -11,59 +11,77 @@ import {
   isNodeLikeProject,
   loader,
   promptDatabase,
+  promptEngine,
   readJSON,
+  root,
   setupDatabase,
-  setupScripts,
+  setupEngine,
   writeJSON,
 } from "../util"
 
-export const command = new Command("make")
-  .aliases(["create", "new"])
+export const command = new Command("new")
   .description("Generate a typescript bot")
-  .action(async () => {
+  .option(
+    "-b, --branch <branch>",
+    "Branch to clone the boilerplate from",
+    "master"
+  )
+  .action(async (options) => {
     // base config
     const base = await inquirer.prompt([
       {
         type: "input",
         name: "name",
-        message:
-          "Enter the bot name (used as directory name and package.json name)",
+        message: `Enter the bot name ${util.styleText(
+          "grey",
+          "(used as directory name and package.json name)"
+        )}`,
         default: "bot.ts",
       },
       {
         type: "input",
         name: "description",
-        message: "Enter a short description for the bot (one line)",
+        message: `Enter a short description for the bot ${util.styleText(
+          "grey",
+          "(one line)"
+        )}`,
       },
       {
         type: "input",
         name: "path",
-        message: "Where will the bot be located? (here by default)",
+        message: `Where will the bot be located? ${util.styleText(
+          "grey",
+          "(here by default)"
+        )}`,
         default: ".",
       },
       {
         type: "input",
         name: "prefix",
-        message: "Enter the bot prefix for textual commands",
+        message: `Enter the bot prefix ${util.styleText(
+          "grey",
+          "(for textual commands)"
+        )}`,
         default: ".",
       },
       {
-        type: "input",
+        type: "list",
         name: "locale",
-        message: "Enter the locale code for timezone",
+        message: "Enter the default bot locale",
         default: "en",
-        validate(value) {
-          return (
-            Intl.getCanonicalLocales(value).length > 0 || "Invalid locale code"
-          )
-        },
+        choices: readJSON<{ name: string; value: string }[]>(
+          root("locales.json")
+        ),
       },
       {
         type: "password",
         name: "token",
-        message: "Enter the bot token (needed for configuration)",
+        message: `Enter the bot token ${util.styleText(
+          "grey",
+          "(needed for configuration)"
+        )}`,
         async validate(value) {
-          if (!value) return "Bot token is required"
+          if (!value.trim()) return "Bot token is required"
 
           try {
             const response = await fetch(
@@ -76,7 +94,7 @@ export const command = new Command("make")
             )
 
             if (response.status === 200) return true
-            return "Invalid token"
+            return `Invalid token (code ${response.status})`
           } catch {
             return "Internal error"
           }
@@ -84,50 +102,33 @@ export const command = new Command("make")
       },
     ])
 
-    if (isNodeLikeProject(base.path)) {
-      const { overwrite } = await inquirer.prompt([
+    const project = (...segments: string[]) =>
+      cwd(base.path, base.name, ...segments)
+
+    let onverwrite = false
+
+    if (isNodeLikeProject(project())) {
+      const { confirmOverwrite } = await inquirer.prompt([
         {
           type: "confirm",
-          name: "overwrite",
-          message: "Do you want to overwrite the existing project?",
+          name: "confirmOverwrite",
+          message: `Do you want to ${util.styleText(
+            "red",
+            "overwrite the existing project"
+          )}?`,
           default: false,
         },
       ])
 
-      if (!overwrite) {
+      if (!confirmOverwrite) {
         console.log(util.styleText("red", "Aborted."))
         process.exit(0)
       }
+
+      onverwrite = true
     }
 
-    // runtime
-    const { runtime } = await inquirer.prompt([
-      {
-        type: "list",
-        name: "runtime",
-        message: "Select the JavaScript runtime",
-        choices: [
-          { value: "node", name: "Node.js" },
-          { value: "deno", name: "Deno" },
-          { value: "bun", name: "Bun (recommended)" },
-        ],
-        default: "node",
-      },
-    ])
-
-    let list = ["npm", "yarn", "pnpm"]
-
-    if (runtime !== "node") list.unshift(runtime)
-
-    const { packageManager } = await inquirer.prompt([
-      {
-        type: "list",
-        name: "packageManager",
-        message: "Select the package manager",
-        choices: list,
-        default: list[0],
-      },
-    ])
+    const { runtime, packageManager } = await promptEngine()
 
     // database
     const { database, client } = await promptDatabase()
@@ -148,16 +149,13 @@ export const command = new Command("make")
 
     // generate!
 
-    const project = (...segments: string[]) =>
-      cwd(base.path, base.name, ...segments)
-
     const warns: string[] = []
 
     let app: APIApplication, scripts: Record<string, Record<string, string>>
 
     // validate all data before building any files
     await loader(
-      "validating",
+      "Validating data",
       async () => {
         app = await fetch("https://discord.com/api/v10/applications/@me", {
           headers: {
@@ -172,34 +170,41 @@ export const command = new Command("make")
           process.exit(1)
         }
       },
-      "validated"
+      "Validated data"
     )
+
+    if (onverwrite) {
+      await loader(
+        "Remove existing project",
+        async () => {
+          await fsp.rm(project(), { recursive: true, force: true })
+        },
+        "Removed existing project"
+      )
+    }
 
     // download the boilerplate from github
     await loader(
-      "downloading",
+      "Downloading boilerplate",
       () =>
         execSync(
           [
             "git clone",
             "--depth=1",
             "--single-branch",
-            "--branch=master",
+            `--branch=${options.branch}`,
             "https://github.com/bot-ts/framework.git",
             `"${project()}"`,
           ].join(" "),
           { stdio: ["ignore", "ignore", "pipe"] }
         ),
-      "downloaded"
+      "Downloaded boilerplate"
     )
 
     await loader(
-      "initializing",
+      "Initializing configuration",
       async () => {
         await fsp.writeFile(project(".env"), "", "utf8")
-
-        await injectEnvLine("RUNTIME", runtime, project())
-        await injectEnvLine("PACKAGE_MANAGER", packageManager, project())
 
         await injectEnvLine("BOT_MODE", "development", project())
         await injectEnvLine("BOT_PREFIX", base.prefix, project())
@@ -210,26 +215,26 @@ export const command = new Command("make")
         await injectEnvLine("BOT_ID", app.id, project())
         await injectEnvLine("BOT_OWNER", app.owner!.id, project())
 
-        scripts = await setupScripts({ runtime, packageManager }, project())
+        scripts = await setupEngine({ runtime, packageManager }, project())
         await setupDatabase({ client, ...database }, project())
       },
-      "initialized"
+      "Initialized configuration"
     )
 
     // TODO: update package.json scripts with base.path:scripts/generate-scripts.js
 
     await loader(
-      "installing",
+      "Installing dependencies",
       () =>
         execSync(scripts["install-all"][packageManager], {
           cwd: project(),
           stdio: ["ignore", "ignore", "pipe"],
         }),
-      "installed"
+      "Installed dependencies"
     )
 
     await loader(
-      "finishing",
+      "Finishing setup",
       async () => {
         try {
           await fsp.unlink(project("update-readme.js"))
@@ -254,7 +259,7 @@ export const command = new Command("make")
         })
 
         try {
-          execSync(`${scripts["run-script"]} readme`, {
+          execSync(`${scripts["run-script"][packageManager]} readme`, {
             cwd: project(),
             stdio: "ignore",
           })
@@ -262,7 +267,7 @@ export const command = new Command("make")
           warns.push("failure to generate README.md")
         }
       },
-      "finished"
+      "Finished setup"
     )
 
     if (warns.length > 0) {

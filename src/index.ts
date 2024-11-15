@@ -1,7 +1,3 @@
-#!/usr/bin/env node
-
-// replace yargs by https://www.npmjs.com/package/@inquirer/prompts and https://github.com/tj/commander.js
-
 import path from "path"
 import { PackageJson } from "types-package-json"
 import url from "url"
@@ -9,8 +5,8 @@ import { readJSON } from "./util"
 
 import { program } from "commander"
 import { command as add } from "./cmd/add"
-import { command as make } from "./cmd/make"
-import { command as set } from "./cmd/set"
+import { command as config } from "./cmd/config"
+import { command as _new } from "./cmd/new"
 
 const dirname = path.dirname(url.fileURLToPath(import.meta.url))
 
@@ -23,8 +19,8 @@ program
   .version(
     readJSON<PackageJson>(path.join(dirname, "..", "package.json")).version
   )
+  .addCommand(_new)
   .addCommand(add)
-  .addCommand(make)
-  .addCommand(set)
+  .addCommand(config)
 
 program.parse()

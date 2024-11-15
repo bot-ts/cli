@@ -8,7 +8,6 @@ import { command as slash } from "./add/slash"
 import { command as table } from "./add/table"
 
 export const command = new Command("add")
-  .aliases(["generate"])
   .description("Generate a bot component")
   .addCommand(cmd)
   .addCommand(slash)

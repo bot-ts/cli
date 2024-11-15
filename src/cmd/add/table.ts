@@ -4,28 +4,32 @@ import fs from "fs"
 import inquirer from "inquirer"
 import path from "path"
 import { styleText } from "util"
-import { cwd, format } from "../../util"
+import { capitalize, cwd, format, isBotTsProject } from "../../util"
+
+const TYPES = [
+  "string",
+  "integer",
+  "float",
+  "boolean",
+  "date",
+  "json",
+  "bigint",
+] as const
 
 export const command = new Command("table")
   .description(
     "Add a database table\nMore info: https://ghom.gitbook.io/bot.ts/usage/use-database#create-a-table"
   )
+  .usage("[--options]")
   .action(async () => {
-    const types = [
-      "string",
-      "integer",
-      "float",
-      "boolean",
-      "date",
-      "json",
-      "bigint",
-    ]
+    if (!isBotTsProject()) return process.exit(1)
 
     const { name, description, priority } = await inquirer.prompt([
       {
         type: "input",
         name: "name",
         message: "Enter the table name",
+        required: true,
       },
       {
         type: "input",
@@ -35,27 +39,38 @@ export const command = new Command("table")
       {
         type: "number",
         name: "priority",
-        message:
-          "Enter the computing priority for relations: higher is computed first",
+        message: `Enter the computing priority for relations ${styleText(
+          "grey",
+          "(higher is computed first)"
+        )}`,
         default: 0,
       },
     ])
 
     const columns: Record<string, object> = {}
 
-    let addColumn = true
+    let addColumn = true,
+      firstColumn = true
 
     while (addColumn) {
       const { category } = await inquirer.prompt([
         {
           type: "list",
           name: "category",
-          message: "Choose the column category",
+          message: `Choose the ${
+            firstColumn ? "first" : "next"
+          } column category`,
           choices: [
-            { name: "Data column (default)", value: "data" },
+            {
+              name: `Data column ${styleText("grey", "(default)")}`,
+              value: "data",
+            },
             { name: "Relation column", value: "relation" },
             {
-              name: "Primary column (e.g. auto increments)",
+              name: `Primary column ${styleText(
+                "grey",
+                "(e.g. auto increments)"
+              )}`,
               value: "primary",
             },
           ],
@@ -65,17 +80,18 @@ export const command = new Command("table")
 
       switch (category) {
         case "data": {
-          const { name, type, required, unique } = await inquirer.prompt([
+          const { name, typeFn, required, unique } = await inquirer.prompt([
             {
               type: "input",
               name: "name",
               message: "Enter the column name",
+              required: true,
             },
             {
               type: "list",
-              name: "type",
+              name: "typeFn",
               message: "Enter the column type",
-              choices: types,
+              choices: TYPES,
             },
             {
               type: "confirm",
@@ -91,22 +107,75 @@ export const command = new Command("table")
             },
           ])
 
-          columns[name] = { category, type, required, unique }
+          columns[name] = {
+            category,
+            typeFn,
+            required,
+            unique,
+            type: typeFromTypeFn(typeFn),
+          }
           break
         }
         case "relation": {
-          const { tableName, tableColumn } = await inquirer.prompt([])
+          const { tableName } = await inquirer.prompt([
+            {
+              type: "input",
+              name: "tableName",
+              message: "Enter the related table name",
+            },
+          ])
 
-          const { name } = await inquirer.prompt([
+          const { tableColumn } = await inquirer.prompt([
+            {
+              type: "input",
+              name: "tableColumn",
+              message: `Enter the related ${styleText(
+                "blueBright",
+                tableName
+              )}'s column name`,
+            },
+          ])
+
+          // TODO: resolve the type of the column from the targetted table
+
+          const { name, typeFn } = await inquirer.prompt([
+            {
+              type: "list",
+              name: "typeFn",
+              message: `Enter the related ${styleText(
+                "blueBright",
+                tableName + "." + tableColumn
+              )}'s type`,
+              choices: TYPES,
+              default: "integer",
+            },
             {
               type: "input",
               name: "name",
-              message: "Enter the column name",
+              message: "Enter the relation name",
               default: tableName + "_" + tableColumn,
             },
           ])
 
-          columns[name] = { category, tableName, tableColumn, name }
+          const { deleteCascade } = await inquirer.prompt([
+            {
+              type: "confirm",
+              name: "deleteCascade",
+              message: "Should the relation cascade on delete?",
+              default: false,
+            },
+          ])
+
+          columns[name] = {
+            category,
+            tableName,
+            tableColumn,
+            name,
+            typeFn,
+            type: typeFromTypeFn(typeFn),
+            required: true,
+            deleteCascade,
+          }
           break
         }
         case "primary": {
@@ -120,23 +189,28 @@ export const command = new Command("table")
               type: "confirm",
               name: "auto",
               message: "Is this column auto incrementing?",
-              default: false,
+              default: true,
             },
           ])
 
           if (!auto) {
-            const { type } = await inquirer.prompt([
+            const { typeFn } = await inquirer.prompt([
               {
                 type: "list",
-                name: "type",
+                name: "typeFn",
                 message: "Enter the primary column type",
-                choices: types,
+                choices: TYPES,
               },
             ])
 
-            columns[name] = { category, type }
+            columns[name] = {
+              category,
+              typeFn,
+              type: typeFromTypeFn(typeFn),
+              required: true,
+            }
           } else {
-            columns[name] = { category, auto }
+            columns[name] = { category, auto, type: "number", required: true }
           }
 
           break
@@ -151,6 +225,7 @@ export const command = new Command("table")
       })
 
       addColumn = moreColumns
+      firstColumn = false
     }
 
     const template = fs.readFileSync(cwd("templates", "table.ejs"), "utf8")
@@ -161,6 +236,7 @@ export const command = new Command("table")
       format(
         ejs.compile(template)({
           name,
+          Name: capitalize(name),
           description,
           priority,
           columns,
@@ -179,3 +255,20 @@ export const command = new Command("table")
       )}`
     )
   })
+
+function typeFromTypeFn(typeFn: (typeof TYPES)[number]) {
+  switch (typeFn) {
+    case "integer":
+      return "number"
+    case "float":
+      return "number"
+    case "date":
+      return "Date"
+    case "json":
+      return "object"
+    case "bigint":
+      return "bigint"
+    default:
+      return typeFn
+  }
+}

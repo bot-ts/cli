@@ -4,13 +4,16 @@ import fs from "fs"
 import inquirer from "inquirer"
 import path from "path"
 import { styleText } from "util"
-import { capitalize, cwd, format } from "../../util"
+import { capitalize, cwd, format, isBotTsProject } from "../../util"
 
 export const command = new Command("cron")
   .description(
     "Add a cron job\nMore info: https://ghom.gitbook.io/bot.ts/usage/create-a-cron"
   )
+  .usage("[--options]")
   .action(async () => {
+    if (!isBotTsProject()) return process.exit(1)
+
     const { name, description, scheduleType } = await inquirer.prompt([
       {
         type: "input",
