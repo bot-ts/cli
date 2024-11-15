@@ -4,7 +4,7 @@ import fs from "fs"
 import inquirer from "inquirer"
 import path from "path"
 import { styleText } from "util"
-import { capitalize, cwd } from "../../util"
+import { capitalize, cwd, format } from "../../util"
 
 export const command = new Command("button")
   .description("add a button")
@@ -73,13 +73,15 @@ export const command = new Command("button")
 
     fs.writeFileSync(
       cwd(...buttonPath),
-      ejs.compile(template)({
-        name,
-        Name: capitalize(name),
-        description,
-        params,
-        label,
-      }),
+      format(
+        ejs.compile(template)({
+          name,
+          Name: capitalize(name),
+          description,
+          params,
+          label,
+        })
+      ),
       "utf8"
     )
 

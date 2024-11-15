@@ -4,7 +4,7 @@ import fs from "fs"
 import inquirer from "inquirer"
 import path from "path"
 import { styleText } from "util"
-import { cwd, readJSON, root } from "../../util"
+import { cwd, format, readJSON, root } from "../../util"
 
 export const command = new Command("listener")
   .description("add a listener")
@@ -40,18 +40,20 @@ export const command = new Command("listener")
     ])
 
     const args = events[event]
-
+    const filename = [category, event].filter(Boolean).join(".")
     const template = fs.readFileSync(cwd("templates", "listener.ejs"), "utf8")
-    const listenerPath = ["src", "listeners", category + "." + event + ".ts"]
+    const listenerPath = ["src", "listeners", filename + ".ts"]
 
     fs.writeFileSync(
       cwd(...listenerPath),
-      ejs.compile(template)({
-        event,
-        once,
-        description,
-        args: Array.isArray(args) ? args : [args],
-      }),
+      format(
+        ejs.compile(template)({
+          event,
+          once,
+          description,
+          args: Array.isArray(args) ? args : [args],
+        })
+      ),
       "utf8"
     )
 

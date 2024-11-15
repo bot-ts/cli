@@ -4,7 +4,7 @@ import fs from "fs"
 import inquirer from "inquirer"
 import path from "path"
 import { styleText } from "util"
-import { cwd } from "../../util"
+import { cwd, format } from "../../util"
 
 export const command = new Command("command")
   .description("add a command")
@@ -41,12 +41,14 @@ export const command = new Command("command")
 
     fs.writeFileSync(
       cwd(...commandPath),
-      ejs.compile(template)({
-        name,
-        description,
-        channelType,
-        botOwnerOnly,
-      }),
+      format(
+        ejs.compile(template)({
+          name,
+          description,
+          channelType,
+          botOwnerOnly,
+        })
+      ),
       "utf8"
     )
 

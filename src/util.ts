@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
 import cp from "child_process"
+import ejs from "ejs"
 import fs from "fs"
 import fsp from "fs/promises"
 import loading from "loading-cli"
 import path from "path"
+import prettier from "prettier"
 import readline from "readline"
-import ss from "string-similarity"
 import { PackageJson } from "types-package-json"
 import url from "url"
 import util from "util"
@@ -19,8 +20,8 @@ export const root = (...segments: string[]) =>
 export const cwd = (...segments: string[]) =>
   path.join(process.cwd(), ...segments)
 
-export function isNodeLikeProject(): boolean {
-  return fs.existsSync(cwd("package.json"))
+export function isNodeLikeProject(projectPath = cwd()): boolean {
+  return fs.existsSync(path.join(projectPath, "package.json"))
 }
 
 export async function isBotTsProject(): Promise<boolean> {
@@ -114,44 +115,57 @@ export async function injectEnvLine(
   const env = await fsp.readFile(path.join(projectPath, ".env"), "utf8")
   const lines = env.split("\n")
   const index = lines.findIndex((line) => line.split("=")[0] === name)
+
   if (index > -1) lines.splice(index, 1)
+
   lines.push(`${name}="${value}"`)
+
   await fsp.writeFile(path.join(projectPath, ".env"), lines.join("\n"), "utf8")
 }
 
+export function format(str: string) {
+  return prettier.format(str, {
+    parser: "typescript",
+    semi: false,
+    endOfLine: "crlf",
+  })
+}
+
 export async function setupDatabase(
-  projectPath: string,
   database: {
-    database: string
-    host: string
+    client: string
+    host?: string
     port?: string
     password?: string
     user?: string
-    dbname?: string
-  }
+    database?: string
+  },
+  projectPath = cwd()
 ) {
-  const conf = await readJSON<PackageJson>(
-    path.join(projectPath, "package.json")
-  )
+  const conf = readJSON<PackageJson>(path.join(projectPath, "package.json"))
 
   if (!conf.dependencies) conf.dependencies = {}
 
   // delete all other database dependencies.
   for (const dbname of ["sqlite3", "mysql2", "pg"]) {
-    if (dbname !== database.database) delete conf.dependencies[dbname]
+    if (dbname !== database.client) delete conf.dependencies[dbname]
     else conf.dependencies[dbname] = "latest"
   }
 
-  await writeJSON(path.join(projectPath, "package.json"), conf)
+  writeJSON(path.join(projectPath, "package.json"), conf)
 
   const template = await fsp.readFile(
-    path.join(projectPath, "templates", database.database + ".txt"),
+    path.join(projectPath, "templates", "database.ejs"),
     "utf8"
   )
 
   await fsp.writeFile(
     path.join(projectPath, "src", "app", "database.ts"),
-    template,
+    format(
+      ejs.compile(template)({
+        client: database.client,
+      })
+    ),
     "utf8"
   )
 
@@ -160,155 +174,65 @@ export async function setupDatabase(
   if (database.user) await injectEnvLine("DB_USER", database.user, projectPath)
   if (database.password)
     await injectEnvLine("DB_PASSWORD", database.password, projectPath)
-  if (database.dbname)
-    await injectEnvLine("DB_DATABASE", database.dbname, projectPath)
+  if (database.database)
+    await injectEnvLine("DB_DATABASE", database.database, projectPath)
 }
 
-export function makeFile(
-  id: "command" | "button" | "listener" | "slash" | "cron",
-  arg: string,
-  arg2?: string
+/**
+ * Generate pacakge.json scripts from compatibility.json and return the compatibility json components.
+ */
+export async function setupScripts(
+  config: {
+    runtime: string
+    packageManager: string
+  },
+  projectPath = cwd()
 ) {
-  const name = () => (id === "slash" ? "slash command" : id)
+  const packageJsonPath = path.join(projectPath, "package.json")
+  const compatibilityJsonPath = path.join(projectPath, "compatibility.json")
 
-  return [
-    `${id} <${arg}>${arg2 ? ` <${arg2}>` : ""}`,
-    "add a " + name(),
-    (yargs: any) => {
-      yargs.positional(arg, {
-        describe: name() + " " + arg,
-      })
-      if (arg2) {
-        yargs.positional(arg2, {
-          describe: `The ${arg2} of ${id} file`,
-        })
+  const { templates, components } = readJSON<{
+    templates: Record<string, string | Record<string, string>>
+    components: Record<string, Record<string, string>>
+  }>(compatibilityJsonPath)
+
+  const generateScripts = () => {
+    const scripts: Record<string, string> = {}
+
+    for (const [key, value] of Object.entries(templates)) {
+      if (typeof value === "string") {
+        scripts[key] = replaceTags(value)
+      } else if (typeof value === "object") {
+        scripts[key] = replaceTags(value[config.runtime] ?? value.default)
       }
-    },
-    async (argv: any) => {
-      console.time("duration")
+    }
 
-      if (!(await isBotTsProject()))
-        return console.error(
-          util.styleText(
-            "red",
-            'you should only use this command at the root of a "bot.ts" project'
-          )
-        )
+    return scripts
+  }
 
-      if (/[\\\/]/.test(argv.arg))
-        return console.error(
-          util.styleText(
-            "red",
-            `${name()} ${arg} cannot contain path separators.`
-          )
-        )
-
-      if (/[\\\/]/.test(argv.arg2))
-        return console.error(
-          util.styleText(
-            "red",
-            `${name()} ${arg2} cannot contain path separators.`
-          )
-        )
-
-      if (id === "listener" && !argv[arg2!])
-        return console.error(
-          util.styleText("red", "you should give a category name.")
-        )
-
-      const filename =
-        id === "listener"
-          ? `${argv[arg2!]}.${argv[arg]}.ts`
-          : (argv.name ?? argv[arg]) + ".ts"
-
-      const events = await readJSON<Record<string, string | string[]>>(
-        "../events.json"
-      )
-
-      if (arg === "event") {
-        if (!argv[arg]) {
-          return console.error(
-            util.styleText(
-              "red",
-              "you should give a Discord Client event name."
-            )
-          )
-        }
-
-        const event = Object.keys(events).find(
-          (key) => key.toLowerCase() === argv[arg].toLowerCase()
-        )
-
-        if (event) {
-          argv[arg] = event
-        } else {
-          console.error(
-            util.styleText(
-              "red",
-              "you should give a valid Discord Client event name."
-            )
-          )
-          for (const event of Object.keys(events)) {
-            const similarity = ss.compareTwoStrings(
-              event.toLowerCase(),
-              argv[arg].toLowerCase()
-            )
-            if (similarity > 0.75) {
-              console.log(
-                `Did you mean ${util.styleText("cyanBright", event)} instead?\n`
-              )
-            }
-          }
-          return
-        }
+  const replaceTags = (template: string) => {
+    return template.replace(/{([a-z-]+)}/g, (_, tag) => {
+      if ("note" in components[tag]) {
+        return components[tag][config.runtime]
+      } else {
+        return components[tag][config.packageManager]
       }
+    })
+  }
 
-      const template = await fsp.readFile(cwd("templates", id), "utf8")
-      const capitalize = (t: string) => t[0].toUpperCase() + t.slice(1)
+  const generatedScripts = generateScripts()
+  const packageJson = JSON.parse(await fsp.readFile(packageJsonPath, "utf-8"))
 
-      let file = template
-        .replace(new RegExp(`{{ ${arg} }}`, "g"), argv[arg])
-        .replace(
-          new RegExp(`{{ ${capitalize(arg)} }}`, "g"),
-          capitalize(argv[arg])
-        )
+  packageJson.scripts = {
+    ...packageJson.scripts,
+    ...generatedScripts,
+  }
 
-      if (arg2)
-        file = file.replace(new RegExp(`{{ ${arg2} }}`, "g"), argv[arg2])
+  await fsp.writeFile(
+    packageJsonPath,
+    JSON.stringify(packageJson, null, 2),
+    "utf-8"
+  )
 
-      if (arg === "event") {
-        let args = events[argv[arg]]
-        args = typeof args === "string" ? args : args.join(", ")
-        file = file.replace(`{{ args }}`, args)
-      }
-
-      const directory = cwd(
-        "src",
-        id + (id === "slash" || id === "cron" ? "" : "s")
-      )
-
-      if (!fs.existsSync(directory))
-        return console.error(
-          util.styleText(
-            "red",
-            `The ${util.styleText("white", directory)} directory doesn't exist.`
-          )
-        )
-
-      const destPath = path.join(directory, filename)
-
-      if (fs.existsSync(destPath))
-        return console.error(
-          util.styleText("red", `${argv[arg]} ${name()} already exists.`)
-        )
-
-      await fsp.writeFile(destPath, file, "utf8")
-
-      console.log(
-        util.styleText("green", `\n${argv[arg]} ${name()} has been created.`)
-      )
-      console.log(util.styleText("cyanBright", `=> ${path}`), "\n")
-      console.timeEnd("duration")
-    },
-  ] as const
+  return components
 }

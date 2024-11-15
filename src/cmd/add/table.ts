@@ -2,9 +2,9 @@ import { Command } from "commander"
 import ejs from "ejs"
 import fs from "fs"
 import inquirer from "inquirer"
-import { cwd } from "../../util"
 import path from "path"
 import { styleText } from "util"
+import { cwd, format } from "../../util"
 
 export const command = new Command("table")
   .description("add a database table")
@@ -152,16 +152,18 @@ export const command = new Command("table")
     }
 
     const template = fs.readFileSync(cwd("templates", "table.ejs"), "utf8")
-    const buttonPath = ["src", "buttons", name + ".ts"]
+    const buttonPath = ["src", "tables", name + ".ts"]
 
     fs.writeFileSync(
       cwd(...buttonPath),
-      ejs.compile(template)({
-        name,
-        description,
-        priority,
-        columns,
-      }),
+      format(
+        ejs.compile(template)({
+          name,
+          description,
+          priority,
+          columns,
+        })
+      ),
       "utf8"
     )
 

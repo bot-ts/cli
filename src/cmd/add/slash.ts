@@ -4,7 +4,7 @@ import fs from "fs"
 import inquirer from "inquirer"
 import path from "path"
 import { styleText } from "util"
-import { cwd } from "../../util"
+import { cwd, format } from "../../util"
 
 export const command = new Command("slash")
   .description("add a slash command")
@@ -46,13 +46,15 @@ export const command = new Command("slash")
 
     fs.writeFileSync(
       cwd(...slashPath),
-      ejs.compile(template)({
-        name,
-        description,
-        guildOnly,
-        botOwnerOnly,
-        withSubs,
-      }),
+      format(
+        ejs.compile(template)({
+          name,
+          description,
+          guildOnly,
+          botOwnerOnly,
+          withSubs,
+        })
+      ),
       "utf8"
     )
 

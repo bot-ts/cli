@@ -4,7 +4,7 @@ import fs from "fs"
 import inquirer from "inquirer"
 import path from "path"
 import { styleText } from "util"
-import { capitalize, cwd } from "../../util"
+import { capitalize, cwd, format } from "../../util"
 
 export const command = new Command("cron")
   .description("add a cron job")
@@ -49,12 +49,14 @@ export const command = new Command("cron")
 
     fs.writeFileSync(
       cwd(...cronPath),
-      ejs.compile(template)({
-        name,
-        Name: capitalize(name),
-        description,
-        scheduleType,
-      }),
+      format(
+        ejs.compile(template)({
+          name,
+          Name: capitalize(name),
+          description,
+          scheduleType,
+        })
+      ),
       "utf8"
     )
 

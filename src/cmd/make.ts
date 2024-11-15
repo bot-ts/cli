@@ -1,165 +1,276 @@
-import boxen from "boxen"
-import { exec } from "child_process"
+import { execSync } from "child_process"
 import { Command } from "commander"
-import * as discord from "discord.js"
-import figlet from "figlet"
+import { APIApplication } from "discord-api-types/v10"
 import { promises as fsp } from "fs"
+import inquirer from "inquirer"
 import { PackageJson } from "types-package-json"
 import * as util from "util"
 import {
-  confirm,
   cwd,
   injectEnvLine,
   isNodeLikeProject,
   loader,
   readJSON,
   setupDatabase,
+  setupScripts,
   writeJSON,
 } from "../util"
 
 export const command = new Command("make")
+  .aliases(["create", "new"])
   .description("create typescript bot")
-  .option("-n, --name <name>", "bot name", "bot.ts")
-  .option("-p, --path <path>", "bot path", ".")
-  .option("-p, --prefix <prefix>", "bot prefix", ".")
-  .option("-l, --locale <locale>", "locale timezone", "en")
-  .option("-d, --database <database>", "used database", "sqlite3")
-  .option("-t, --token <token>", "bot token")
-  .option("--secret <secret>", "bot secret")
-  .option("-o, --owner <owner>", "your Discord id")
-  .option("-h, --host <host>", "database host", "localhost")
-  .option("--port <port>", "database port")
-  .option("-u, --user <user>", "database user")
-  .option("--pw, --password <password>", "database password")
-  .option("--db, --dbname <dbname>", "database name")
-  .action(async (args) => {
-    if (await isNodeLikeProject()) {
-      if (
-        !(await confirm(
-          `${util.styleText(
-            "yellow",
-            "You are currently in a npm project. Do you want to continue to create a bot here?"
-          )} (y/N)`
-        ))
-      ) {
+  .action(async () => {
+    // base config
+    const base = await inquirer.prompt([
+      {
+        type: "input",
+        name: "name",
+        message:
+          "Enter the bot name (used as directory name and package.json name)",
+        default: "bot.ts",
+      },
+      {
+        type: "input",
+        name: "description",
+        message: "Enter a short description for the bot (one line)",
+      },
+      {
+        type: "input",
+        name: "path",
+        message: "Where will the bot be located? (here by default)",
+        default: ".",
+      },
+      {
+        type: "input",
+        name: "prefix",
+        message: "Enter the bot prefix for textual commands",
+        default: ".",
+      },
+      {
+        type: "input",
+        name: "locale",
+        message: "Enter the locale code for timezone",
+        default: "en",
+        validate(value) {
+          return (
+            Intl.getCanonicalLocales(value).length > 0 || "Invalid locale code"
+          )
+        },
+      },
+      {
+        type: "password",
+        name: "token",
+        message: "Enter the bot token (needed for configuration)",
+        async validate(value) {
+          if (!value) return "Bot token is required"
+
+          try {
+            const response = await fetch(
+              "https://discord.com/api/v10/users/@me",
+              {
+                headers: {
+                  Authorization: `Bot ${value}`,
+                },
+              }
+            )
+
+            if (response.status === 200) return true
+            return "Invalid token"
+          } catch {
+            return "Internal error"
+          }
+        },
+      },
+    ])
+
+    if (isNodeLikeProject(base.path)) {
+      const { overwrite } = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "overwrite",
+          message: "Do you want to overwrite the existing project?",
+          default: false,
+        },
+      ])
+
+      if (!overwrite) {
         console.log(util.styleText("red", "Aborted."))
         process.exit(0)
       }
     }
 
-    const borderNone = {
-      top: " ",
-      left: " ",
-      right: " ",
-      bottom: " ",
-      topLeft: " ",
-      topRight: " ",
-      bottomLeft: " ",
-      bottomRight: " ",
-      horizontal: " ",
-      vertical: " ",
+    // runtime
+    const { runtime } = await inquirer.prompt([
+      {
+        type: "list",
+        name: "runtime",
+        message: "Select the JavaScript runtime",
+        choices: [
+          { value: "node", name: "Node.js" },
+          { value: "deno", name: "Deno" },
+          { value: "bun", name: "Bun (recommended)" },
+        ],
+        default: "node",
+      },
+    ])
+
+    let list = ["npm", "yarn", "pnpm"]
+
+    if (runtime !== "node") list.unshift(runtime)
+
+    const { packageManager } = await inquirer.prompt([
+      {
+        type: "list",
+        name: "packageManager",
+        message: "Select the package manager",
+        choices: list,
+        default: list[0],
+      },
+    ])
+
+    // database
+    const { client } = await inquirer.prompt([
+      {
+        type: "list",
+        name: "client",
+        message: "Select the database client",
+        choices: [
+          { value: "sqlite3", name: "SQLite" },
+          { value: "pg", name: "PostgreSQL" },
+          { value: "mysql2", name: "MySQL" },
+        ],
+        default: "sqlite3",
+      },
+    ])
+
+    let database: Record<string, string> = {}
+
+    if (client !== "sqlite3") {
+      database = await inquirer.prompt([
+        {
+          type: "input",
+          name: "host",
+          message: "Enter the database host",
+          default: "127.0.0.1",
+        },
+        {
+          type: "input",
+          name: "port",
+          message: "Enter the database port",
+          default: client === "pg" ? "5432" : "3306",
+        },
+        {
+          type: "input",
+          name: "user",
+          message: "Enter the database user",
+          default: client === "pg" ? "postgres" : "root",
+        },
+        {
+          type: "password",
+          name: "password",
+          message: "Enter the database password",
+        },
+        {
+          type: "input",
+          name: "database",
+          message: "Enter the database/schema name",
+        },
+      ])
     }
+
+    const { confirm } = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "confirm",
+        message: "Ready to generate bot files?",
+        default: true,
+      },
+    ])
+
+    if (!confirm) {
+      console.log(util.styleText("red", "Aborted."))
+      process.exit(0)
+    }
+
+    // generate!
+
+    const project = (...segments: string[]) =>
+      cwd(base.path, base.name, ...segments)
 
     const warns: string[] = []
 
-    console.log(
-      boxen(
-        util.styleText(
-          "blueBright",
-          await new Promise<string>((resolve) =>
-            figlet("bot.ts", (err, value) => {
-              if (err) resolve("")
-              else resolve(value as string)
-            })
-          )
-        ),
-        {
-          float: "center",
-          borderStyle: borderNone,
+    let app: APIApplication, scripts: Record<string, Record<string, string>>
+
+    // validate all data before building any files
+    await loader(
+      "validating",
+      async () => {
+        app = await fetch("https://discord.com/api/v10/applications/@me", {
+          headers: {
+            Authorization: `Bot ${base.token}`,
+          },
+        })
+          .then((res) => res.json())
+          .then((data) => data as APIApplication)
+
+        if (!app.owner) {
+          console.error("Failed to fetch application owner")
+          process.exit(1)
         }
-      )
+      },
+      "validated"
     )
 
-    console.time("duration")
-
+    // download the boilerplate from github
     await loader(
       "downloading",
       () =>
-        exec(
+        execSync(
           [
             "git clone",
             "--depth=1",
             "--single-branch",
             "--branch=master",
             "https://github.com/bot-ts/framework.git",
-            `"${cwd(args.path, args.name)}"`,
-          ].join(" ")
+            `"${project()}"`,
+          ].join(" "),
+          { stdio: ["ignore", "ignore", "pipe"] }
         ),
       "downloaded"
     )
-
-    const project = (...segments: string[]) =>
-      cwd(args.path, args.name, ...segments)
-
-    let ownerName: string | null = null
 
     await loader(
       "initializing",
       async () => {
         await fsp.writeFile(project(".env"), "", "utf8")
 
+        await injectEnvLine("RUNTIME", runtime, project())
+        await injectEnvLine("PACKAGE_MANAGER", packageManager, project())
+
         await injectEnvLine("BOT_MODE", "development", project())
-        await injectEnvLine("BOT_PREFIX", args.prefix, project())
-        await injectEnvLine("BOT_LOCALE", args.locale, project())
-        await injectEnvLine("BOT_NAME", args.name, project())
+        await injectEnvLine("BOT_PREFIX", base.prefix, project())
+        await injectEnvLine("BOT_LOCALE", base.locale, project())
+        await injectEnvLine("BOT_TOKEN", base.token, project())
+        await injectEnvLine("BOT_NAME", base.name, project())
 
-        const client = new discord.Client<true>({ intents: [] })
-        if (args.token) {
-          try {
-            await client.login(args.token)
-          } catch (error) {
-            return console.error(util.styleText("red", `Invalid token given.`))
-          }
-          await injectEnvLine("BOT_TOKEN", args.token, project())
-        }
+        await injectEnvLine("BOT_ID", app.id, project())
+        await injectEnvLine("BOT_OWNER", app.owner!.id, project())
 
-        if (!client.isReady())
-          return console.error(
-            util.styleText("red", "Discord Client connection error")
-          )
-
-        if (args.token && !args.owner) {
-          const app = await client.application.fetch()
-          const owner = app.owner instanceof discord.User ? app.owner : null
-
-          if (!owner) warns.push("failure to detect bot owner.")
-          else {
-            ownerName = owner.username
-            await injectEnvLine("BOT_OWNER", owner.id, project())
-          }
-        } else if (args.owner) {
-          await injectEnvLine("BOT_OWNER", args.owner, project())
-
-          const owner = await client.users.fetch(args.owner)
-
-          ownerName = owner.username
-        }
-
-        await client.destroy()
-
-        await injectEnvLine("BOT_ID", client.user.id, project())
-
-        if (args.secret)
-          await injectEnvLine("BOT_SECRET", args.secret, project())
-
-        await setupDatabase(project(), args)
+        scripts = await setupScripts({ runtime, packageManager }, project())
+        await setupDatabase({ client, ...database }, project())
       },
       "initialized"
     )
 
+    // TODO: update package.json scripts with base.path:scripts/generate-scripts.js
+
     await loader(
       "installing",
-      () => exec("npm install --force", { cwd: project() }),
+      () =>
+        execSync(scripts["install-all"][packageManager], {
+          cwd: project(),
+          stdio: ["ignore", "ignore", "pipe"],
+        }),
       "installed"
     )
 
@@ -170,18 +281,28 @@ export const command = new Command("make")
           await fsp.unlink(project("update-readme.js"))
         } catch (error) {}
 
-        await exec("git fetch --unshallow origin", { cwd: project() })
-        await exec("git remote remove origin", { cwd: project() })
+        execSync("git fetch --unshallow origin", {
+          cwd: project(),
+          stdio: ["ignore", "ignore", "pipe"],
+        })
+
+        execSync("git remote remove origin", {
+          cwd: project(),
+          stdio: ["ignore", "ignore", "pipe"],
+        })
 
         const conf = await readJSON<PackageJson>(project("package.json"))
-        await writeJSON(project("package.json"), {
+        writeJSON(project("package.json"), {
           ...conf,
-          name: args.name,
-          author: ownerName,
+          name: base.name,
+          author: app.owner!.username,
         })
 
         try {
-          await exec("npm run readme", { cwd: project() })
+          execSync(`${scripts["run-script"]} readme`, {
+            cwd: project(),
+            stdio: "ignore",
+          })
         } catch (error) {
           warns.push("failure to generate README.md")
         }
@@ -189,69 +310,16 @@ export const command = new Command("make")
       "finished"
     )
 
-    console.log(util.styleText("green", `\n${args.name} bot has been created.`))
-    console.log(util.styleText("cyanBright", `=> ${project()}\n`))
-    console.timeEnd("duration")
-
-    const $ = util.styleText("grey", "$")
+    if (warns.length > 0) {
+      console.warn(
+        util.styleText("yellow", warns.map((warn) => `⚠️ ${warn}`).join("\n"))
+      )
+    }
 
     console.log(
-      boxen(
-        [
-          util.styleText("grey", "# first, move to the bot directory"),
-          "  " + $ + " cd " + args.name,
-          "",
-          util.styleText("grey", "# to quickly create a new file"),
-          "  " + $ + " bot add command [name]",
-          "  " + $ + " bot add listener [ClientEvent] [category]",
-          "  " + $ + " bot add namespace [name]",
-          "  " + $ + " bot add table [name]",
-          "",
-          util.styleText("grey", "# to change databse client"),
-          "  " + $ + " bot set database [slite3|mysql2|pg]",
-          "",
-          util.styleText(
-            "grey",
-            "# to watch typescript and reload " + args.name
-          ),
-          "  " + $ + " npm run watch",
-          "",
-          util.styleText(
-            "grey",
-            "# to build typescript and start " + args.name
-          ),
-          "  " + $ + " npm run start",
-          "",
-          util.styleText("grey", "# to simply start " + args.name),
-          "  " + $ + " node .",
-          "",
-          util.styleText("grey", "# format your files with prettier"),
-          "  " + $ + " npm run format",
-          "",
-        ].join("\n"),
-        {
-          float: "center",
-          borderStyle: borderNone,
-        }
-      )
+      `✅ ${util.styleText("blueBright", base.name)} bot has been created.`
     )
-
-    warns.forEach(console.warn)
-
-    console.log(
-      boxen(
-        `Check the validity of the ${util.styleText(
-          "blueBright",
-          ".env"
-        )} information. ${util.styleText("green", "Enjoy!")}`,
-        {
-          borderStyle: "round",
-          borderColor: "yellow",
-          float: "center",
-          padding: 1,
-        }
-      )
-    )
+    console.log(`📂 ${util.styleText("cyanBright", project())}`)
 
     process.exit(0)
   })

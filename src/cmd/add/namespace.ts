@@ -4,7 +4,7 @@ import fs from "fs"
 import inquirer from "inquirer"
 import path from "path"
 import { styleText } from "util"
-import { cwd } from "../../util"
+import { cwd, format } from "../../util"
 
 export const command = new Command("namespace")
   .description("add a namespace")
@@ -28,7 +28,7 @@ export const command = new Command("namespace")
 
     fs.writeFileSync(
       cwd(...namespacePath),
-      ejs.compile(template)({ importCore }),
+      format(ejs.compile(template)({ importCore })),
       "utf8"
     )
 
