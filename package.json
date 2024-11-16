@@ -35,14 +35,13 @@
   },
   "homepage": "https://ghom.gitbook.io/bot-ts/",
   "dependencies": {
-    "@inquirer/prompts": "^7.0.1",
+    "@inquirer/prompts": "^7.1.0",
     "boxen": "=5.1.2",
     "commander": "^12.1.0",
     "discord-api-types": "^0.37.105",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "figlet": "1.8.0",
-    "inquirer": "^12.1.0",
     "loading-cli": "^1.1.0",
     "prettier": "^2.6.2"
   },

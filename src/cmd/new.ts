@@ -1,13 +1,14 @@
+import { confirm, input, password, select } from "@inquirer/prompts"
 import { execSync } from "child_process"
 import { Command } from "commander"
 import { APIApplication } from "discord-api-types/v10"
 import { promises as fsp } from "fs"
-import inquirer from "inquirer"
 import { PackageJson } from "types-package-json"
 import * as util from "util"
 import {
   cwd,
   injectEnvLine,
+  inputName,
   isNodeLikeProject,
   loader,
   promptDatabase,
@@ -28,97 +29,81 @@ export const command = new Command("new")
   )
   .action(async (options) => {
     // base config
-    const base = await inquirer.prompt([
-      {
-        type: "input",
-        name: "name",
-        message: `Enter the bot name ${util.styleText(
-          "grey",
-          "(used as directory name and package.json name)"
-        )}`,
-        default: "bot.ts",
-      },
-      {
-        type: "input",
-        name: "description",
-        message: `Enter a short description for the bot ${util.styleText(
-          "grey",
-          "(one line)"
-        )}`,
-      },
-      {
-        type: "input",
-        name: "path",
-        message: `Where will the bot be located? ${util.styleText(
-          "grey",
-          "(here by default)"
-        )}`,
-        default: ".",
-      },
-      {
-        type: "input",
-        name: "prefix",
-        message: `Enter the bot prefix ${util.styleText(
-          "grey",
-          "(for textual commands)"
-        )}`,
-        default: ".",
-      },
-      {
-        type: "list",
-        name: "locale",
-        message: "Enter the default bot locale",
-        default: "en",
-        choices: readJSON<{ name: string; value: string }[]>(
-          root("locales.json")
-        ),
-      },
-      {
-        type: "password",
-        name: "token",
-        message: `Enter the bot token ${util.styleText(
-          "grey",
-          "(needed for configuration)"
-        )}`,
-        async validate(value) {
-          if (!value.trim()) return "Bot token is required"
+    const name = await inputName("Enter the bot name", {
+      defaultValue: "bot.ts",
+      kebabCase: true,
+    })
 
-          try {
-            const response = await fetch(
-              "https://discord.com/api/v10/users/@me",
-              {
-                headers: {
-                  Authorization: `Bot ${value}`,
-                },
-              }
-            )
+    const description = await input({
+      message: `Enter a short description for the bot ${util.styleText(
+        "grey",
+        "(one line)"
+      )}`,
+    })
 
-            if (response.status === 200) return true
-            return `Invalid token (code ${response.status})`
-          } catch {
-            return "Internal error"
-          }
-        },
+    const location = await input({
+      message: `Where will the bot be located? ${util.styleText(
+        "grey",
+        "(here by default)"
+      )}`,
+      default: ".",
+    })
+
+    const prefix = await input({
+      message: `Enter the bot prefix ${util.styleText(
+        "grey",
+        "(for textual commands)"
+      )}`,
+      default: ".",
+    })
+
+    const locale = await select({
+      message: "Enter the default bot locale",
+      default: "en",
+      choices: readJSON<{ name: string; value: string }[]>(
+        root("locales.json")
+      ),
+    })
+
+    const token = await password({
+      message: `Enter the bot token ${util.styleText(
+        "grey",
+        "(needed for configuration)"
+      )}`,
+      async validate(value) {
+        if (!value.trim()) return "Bot token is required"
+
+        try {
+          const response = await fetch(
+            "https://discord.com/api/v10/users/@me",
+            {
+              headers: {
+                Authorization: `Bot ${value}`,
+              },
+            }
+          )
+
+          if (response.status === 200) return true
+
+          return `Invalid token (code ${response.status})`
+        } catch {
+          return "Internal error"
+        }
       },
-    ])
+    })
 
-    const project = (...segments: string[]) =>
-      cwd(base.path, base.name, ...segments)
+    const project = (...segments: string[]) => cwd(location, name, ...segments)
 
     let onverwrite = false
 
     if (isNodeLikeProject(project())) {
-      const { confirmOverwrite } = await inquirer.prompt([
-        {
-          type: "confirm",
-          name: "confirmOverwrite",
-          message: `Do you want to ${util.styleText(
-            "red",
-            "overwrite the existing project"
-          )}?`,
-          default: false,
-        },
-      ])
+      const confirmOverwrite = await confirm({
+        message: `Do you want to ${util.styleText(
+          "red",
+          "overwrite the existing project"
+        )}?`,
+        default: false,
+      })
 
       if (!confirmOverwrite) {
         console.log(util.styleText("red", "Aborted."))
@@ -133,21 +118,19 @@ export const command = new Command("new")
     // database
     const { database, client } = await promptDatabase()
 
-    const { confirm } = await inquirer.prompt([
-      {
-        type: "confirm",
-        name: "confirm",
-        message: "Ready to generate bot files?",
-        default: true,
-      },
-    ])
+    const ready = await confirm({
+      message: "Ready to generate bot files?",
+      default: true,
+    })
 
-    if (!confirm) {
+    if (!ready) {
       console.log(util.styleText("red", "Aborted."))
       process.exit(0)
     }
 
     // generate!
+
+    console.log()
 
     const warns: string[] = []
 
@@ -159,7 +142,7 @@ export const command = new Command("new")
       async () => {
         app = await fetch("https://discord.com/api/v10/applications/@me", {
           headers: {
-            Authorization: `Bot ${base.token}`,
+            Authorization: `Bot ${token}`,
           },
         })
           .then((res) => res.json())
@@ -207,10 +190,10 @@ export const command = new Command("new")
         await fsp.writeFile(project(".env"), "", "utf8")
 
         await injectEnvLine("BOT_MODE", "development", project())
-        await injectEnvLine("BOT_PREFIX", base.prefix, project())
-        await injectEnvLine("BOT_LOCALE", base.locale, project())
-        await injectEnvLine("BOT_TOKEN", base.token, project())
-        await injectEnvLine("BOT_NAME", base.name, project())
+        await injectEnvLine("BOT_PREFIX", prefix, project())
+        await injectEnvLine("BOT_LOCALE", locale, project())
+        await injectEnvLine("BOT_TOKEN", token, project())
+        await injectEnvLine("BOT_NAME", name, project())
 
         await injectEnvLine("BOT_ID", app.id, project())
         await injectEnvLine("BOT_OWNER", app.owner!.id, project())
@@ -238,7 +221,7 @@ export const command = new Command("new")
       async () => {
         try {
           await fsp.unlink(project("update-readme.js"))
-        } catch (error) {}
+        } catch {}
 
         execSync("git fetch --unshallow origin", {
           cwd: project(),
@@ -250,11 +233,11 @@ export const command = new Command("new")
           stdio: ["ignore", "ignore", "pipe"],
         })
 
-        const packageJson = await readJSON<PackageJson>(project("package.json"))
+        const packageJson = readJSON<PackageJson>(project("package.json"))
 
         writeJSON(project("package.json"), {
           ...packageJson,
-          name: base.name,
+          name,
           author: app.owner!.username,
         })
 
@@ -271,13 +254,13 @@ export const command = new Command("new")
     )
 
     if (warns.length > 0) {
-      console.warn(
-        util.styleText("yellow", warns.map((warn) => `⚠️ ${warn}`).join("\n"))
-      )
+      console.log()
+      warns.map((warn) => console.warn(util.styleText("yellow", `⚠️ ${warn}`)))
     }
 
+    console.log()
     console.log(
-      `✅ ${util.styleText("blueBright", base.name)} bot has been created.`
+      `✅ ${util.styleText("blueBright", name)} bot has been created.`
     )
     console.log(`📂 ${util.styleText("cyanBright", project())}`)
 

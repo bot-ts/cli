@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 
-import cp from "child_process"
+import { input, password, select } from "@inquirer/prompts"
+import { execSync } from "child_process"
 import ejs from "ejs"
 import fs from "fs"
 import fsp from "fs/promises"
-import inquirer from "inquirer"
 import loading from "loading-cli"
 import path from "path"
 import prettier from "prettier"
-import readline from "readline"
 import { PackageJson } from "types-package-json"
 import url from "url"
 import util from "util"
@@ -20,6 +19,35 @@ export const root = (...segments: string[]) =>
 
 export const cwd = (...segments: string[]) =>
   path.join(process.cwd(), ...segments)
+
+export function inputName(
+  message: string,
+  options?: {
+    defaultValue?: string
+    kebabCase?: boolean
+    main?: boolean
+    column?: boolean
+  }
+) {
+  return input({
+    message: `${message} ${util.styleText(
+      "grey",
+      options?.column
+        ? "(in snake_case)"
+        : options?.main
+        ? "(used as directory/package.json name)"
+        : "(used as filename)"
+    )}`,
+    required: true,
+    default: options?.defaultValue,
+    validate: (value) =>
+      options?.column
+        ? /^[a-z]+[a-z0-9_]*$/.test(value) || "Must be in snake_case"
+        : options?.kebabCase
+        ? /^[a-z]+[a-z0-9-]*$/.test(value) || "Must be in kebab-case"
+        : /^[a-z]+[a-zA-Z0-9]*$/.test(value) || "Must be in camelCase",
+  })
+}
 
 export function isNodeLikeProject(projectPath = cwd()): boolean {
   return fs.existsSync(path.join(projectPath, "package.json"))
@@ -64,34 +92,6 @@ export function getDatabaseDriverName(packageJson: PackageJson) {
 
 export async function fetchGenmap() {
   return readJSON<Record<string, string>>(cwd("genmap.json"))
-}
-
-export const exec = (
-  cmd: string,
-  options?: cp.CommonOptions
-): Promise<null> => {
-  return new Promise((res, rej) => {
-    cp.exec(cmd, options, (err) => {
-      if (err) rej(err)
-      else res(null)
-    })
-  })
-}
-
-export async function confirm(question: string) {
-  const line = readline.createInterface({
-    // @ts-ignore
-    input: process.stdin,
-    // @ts-ignore
-    output: process.stdout,
-  })
-
-  return new Promise((resolve) => {
-    line.question(question, (response) => {
-      line.close()
-      resolve(response.toUpperCase() === "Y")
-    })
-  })
 }
 
 export function readJSON<T>(srcPath: string): T {
@@ -152,19 +152,15 @@ export function format(str: string) {
 }
 
 export async function promptDatabase() {
-  const { client } = await inquirer.prompt([
-    {
-      type: "list",
-      name: "client",
-      message: "Select the database client",
-      choices: [
-        { value: "sqlite3", name: "SQLite" },
-        { value: "pg", name: "PostgreSQL" },
-        { value: "mysql2", name: "MySQL" },
-      ],
-      default: "sqlite3",
-    },
-  ])
+  const client = await select({
+    message: "Select the database client",
+    choices: [
+      { value: "sqlite3", name: "SQLite" },
+      { value: "pg", name: "PostgreSQL" },
+      { value: "mysql2", name: "MySQL" },
+    ],
+    default: "sqlite3",
+  })
 
   let database: {
     host?: string
@@ -175,69 +171,58 @@ export async function promptDatabase() {
   } = {}
 
   if (client !== "sqlite3") {
-    database = await inquirer.prompt([
-      {
-        type: "input",
-        name: "host",
-        message: "Enter the database host",
-        default: "127.0.0.1",
-      },
-      {
-        type: "input",
-        name: "port",
-        message: "Enter the database port",
-        default: client === "pg" ? "5432" : "3306",
-      },
-      {
-        type: "input",
-        name: "user",
-        message: "Enter the database user",
-        default: client === "pg" ? "postgres" : "root",
-      },
-      {
-        type: "password",
-        name: "password",
-        message: "Enter the database password",
-      },
-      {
-        type: "input",
-        name: "database",
-        message: "Enter the database/schema name",
-      },
-    ])
+    database.host = await input({
+      message: "Enter the database host",
+      default: "127.0.0.1",
+    })
+
+    database.port = await input({
+      message: "Enter the database port",
+      default: client === "pg" ? "5432" : "3306",
+    })
+
+    database.user = await input({
+      message: "Enter the database user",
+      default: client === "pg" ? "postgres" : "root",
+    })
+
+    database.password = await password({
+      message: "Enter the database password",
+    })
+
+    database.database = await input({
+      message: "Enter the database/schema name",
+      default: client === "pg" ? "postgres" : undefined,
+      required: client !== "pg",
+    })
   }
 
   return { database, client }
 }
 
 export async function promptEngine() {
-  const { runtime } = await inquirer.prompt([
-    {
-      type: "list",
-      name: "runtime",
-      message: "Select the JavaScript runtime",
-      choices: [
-        { value: "node", name: "Node.js" },
-        { value: "deno", name: "Deno" },
-        { value: "bun", name: "Bun (recommended)" },
-      ],
-      default: "node",
-    },
-  ])
+  const runtime = await select({
+    message: "Select the JavaScript runtime",
+    choices: [
+      { value: "node", name: "Node.js" },
+      { value: "deno", name: "Deno" },
+      { value: "bun", name: "Bun (recommended)" },
+    ],
+    default: "node",
+  })
 
   let list = ["npm", "yarn", "pnpm"]
 
   if (runtime !== "node") list.unshift(runtime)
 
-  const { packageManager } = await inquirer.prompt([
-    {
-      type: "list",
-      name: "packageManager",
-      message: "Select the package manager",
-      choices: list,
-      default: list[0],
-    },
-  ])
+  const packageManager = await select({
+    message: "Select the package manager",
+    choices: list.map((pm, index) => ({
+      value: pm,
+      name: index === 0 ? `${pm} (recommended)` : pm,
+    })),
+    default: list[0],
+  })
 
   return { runtime, packageManager }
 }
@@ -253,17 +238,19 @@ export async function setupDatabase(
   },
   projectPath = cwd()
 ) {
-  const conf = readJSON<PackageJson>(path.join(projectPath, "package.json"))
+  const packageJson = readJSON<PackageJson>(
+    path.join(projectPath, "package.json")
+  )
 
-  if (!conf.dependencies) conf.dependencies = {}
+  if (!packageJson.dependencies) packageJson.dependencies = {}
 
   // delete all other database dependencies.
   for (const dbname of ["sqlite3", "mysql2", "pg"]) {
-    if (dbname !== database.client) delete conf.dependencies[dbname]
-    else conf.dependencies[dbname] = "latest"
+    if (dbname !== database.client) delete packageJson.dependencies[dbname]
+    else packageJson.dependencies[dbname] = "latest"
   }
 
-  writeJSON(path.join(projectPath, "package.json"), conf)
+  writeJSON(path.join(projectPath, "package.json"), packageJson)
 
   const template = await fsp.readFile(
     path.join(projectPath, "templates", "database.ejs"),
@@ -298,6 +285,21 @@ export async function setupEngine(
 ) {
   await injectEnvLine("RUNTIME", config.runtime, projectPath)
   await injectEnvLine("PACKAGE_MANAGER", config.packageManager, projectPath)
+
+  const compatibility = readJSON<{
+    components: Record<string, Record<string, string>>
+  }>(path.join(projectPath, "compatibility.json"))
+
+  for (const lockfile of Object.values(compatibility.components["lockfile"])) {
+    try {
+      await fsp.unlink(path.join(projectPath, lockfile))
+    } catch {}
+  }
+
+  execSync(compatibility.components["install-all"][config.packageManager], {
+    stdio: ["ignore", "ignore", "pipe"],
+  })
+
   return await setupScripts(config, projectPath)
 }
 

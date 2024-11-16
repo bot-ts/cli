@@ -22,5 +22,6 @@ program
   .addCommand(_new)
   .addCommand(add)
   .addCommand(config)
+  .action(() => program.help())
 
 program.parse()
