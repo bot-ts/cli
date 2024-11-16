@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 
 import { input, password, select } from "@inquirer/prompts"
-import { execSync } from "child_process"
 import ejs from "ejs"
-import fs from "fs"
-import fsp from "fs/promises"
 import loading from "loading-cli"
-import path from "path"
+import { execSync } from "node:child_process"
+import fs from "node:fs"
+import fsp from "node:fs/promises"
+import path from "node:path"
+import url from "node:url"
+import util from "node:util"
 import prettier from "prettier"
 import { PackageJson } from "types-package-json"
-import url from "url"
-import util from "util"
 
 const dirname = path.dirname(url.fileURLToPath(import.meta.url))
 
@@ -298,6 +298,7 @@ export async function setupEngine(
 
   execSync(compatibility.components["install-all"][config.packageManager], {
     stdio: ["ignore", "ignore", "pipe"],
+    cwd: projectPath,
   })
 
   return await setupScripts(config, projectPath)

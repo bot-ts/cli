@@ -1,9 +1,3 @@
-import { confirm, input, select } from "@inquirer/prompts"
-import { Command } from "commander"
-import ejs from "ejs"
-import fs from "fs"
-import path from "path"
-import { styleText } from "util"
 import {
   cwd,
   format,
@@ -11,7 +5,13 @@ import {
   isBotTsProject,
   readJSON,
   root,
-} from "../../util"
+} from "#src/util"
+import { confirm, input, select } from "@inquirer/prompts"
+import { Command } from "commander"
+import ejs from "ejs"
+import fs from "node:fs"
+import path from "node:path"
+import { styleText } from "node:util"
 
 export const handler = async () => {
   if (!isBotTsProject()) return process.exit(1)

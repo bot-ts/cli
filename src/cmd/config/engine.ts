@@ -1,5 +1,5 @@
+import { isBotTsProject, loader, promptEngine, setupEngine } from "#src/util"
 import { Command } from "commander"
-import { isBotTsProject, loader, promptEngine, setupEngine } from "../../util"
 
 export const handler = async () => {
   if (!isBotTsProject()) return process.exit(1)

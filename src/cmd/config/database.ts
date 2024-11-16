@@ -1,9 +1,3 @@
-import { confirm } from "@inquirer/prompts"
-import { execSync } from "child_process"
-import { Command } from "commander"
-import dotenv from "dotenv"
-import fs from "fs"
-import * as util from "util"
 import {
   cwd,
   getDatabaseDriverName,
@@ -12,7 +6,13 @@ import {
   promptDatabase,
   readJSON,
   setupDatabase,
-} from "../../util"
+} from "#src/util"
+import { confirm } from "@inquirer/prompts"
+import { Command } from "commander"
+import dotenv from "dotenv"
+import { execSync } from "node:child_process"
+import fs from "node:fs"
+import * as util from "node:util"
 
 export const handler = async () => {
   if (!isBotTsProject()) return process.exit(1)

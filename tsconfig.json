@@ -9,7 +9,10 @@
     "strict": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "#src/*": ["./src/*"]
+    }
   },
   "include": ["src/**/*"]
 }

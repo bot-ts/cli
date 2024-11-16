@@ -1,12 +1,12 @@
+import * as button from "#src/cmd/add/button"
+import * as cmd from "#src/cmd/add/command"
+import * as cron from "#src/cmd/add/cron"
+import * as listener from "#src/cmd/add/listener"
+import * as namespace from "#src/cmd/add/namespace"
+import * as slash from "#src/cmd/add/slash"
+import * as table from "#src/cmd/add/table"
 import { select } from "@inquirer/prompts"
 import { Command } from "commander"
-import * as button from "./add/button"
-import * as cmd from "./add/command"
-import * as cron from "./add/cron"
-import * as listener from "./add/listener"
-import * as namespace from "./add/namespace"
-import * as slash from "./add/slash"
-import * as table from "./add/table"
 
 export const command = new Command("add")
   .description("Generate a bot component")

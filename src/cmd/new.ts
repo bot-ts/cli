@@ -1,10 +1,3 @@
-import { confirm, input, password, select } from "@inquirer/prompts"
-import { execSync } from "child_process"
-import { Command } from "commander"
-import { APIApplication } from "discord-api-types/v10"
-import { promises as fsp } from "fs"
-import { PackageJson } from "types-package-json"
-import * as util from "util"
 import {
   cwd,
   injectEnvLine,
@@ -18,7 +11,14 @@ import {
   setupDatabase,
   setupEngine,
   writeJSON,
-} from "../util"
+} from "#src/util"
+import { confirm, input, password, select } from "@inquirer/prompts"
+import { Command } from "commander"
+import { APIApplication } from "discord-api-types/v10"
+import { execSync } from "node:child_process"
+import { promises as fsp } from "node:fs"
+import * as util from "node:util"
+import { PackageJson } from "types-package-json"
 
 export const command = new Command("new")
   .description("Generate a typescript bot")
@@ -30,7 +30,7 @@ export const command = new Command("new")
   .action(async (options) => {
     // base config
     const name = await inputName("Enter the bot name", {
-      defaultValue: "bot.ts",
+      defaultValue: "bot-ts",
       kebabCase: true,
     })
 
@@ -160,7 +160,7 @@ export const command = new Command("new")
       await loader(
         "Remove existing project",
         async () => {
-          await fsp.rm(project(), { recursive: true, force: true })
+          await fsp.rmdir(project(), { recursive: true })
         },
         "Removed existing project"
       )
@@ -223,28 +223,21 @@ export const command = new Command("new")
           await fsp.unlink(project("update-readme.js"))
         } catch {}
 
-        execSync("git fetch --unshallow origin", {
-          cwd: project(),
-          stdio: ["ignore", "ignore", "pipe"],
-        })
-
-        execSync("git remote remove origin", {
-          cwd: project(),
-          stdio: ["ignore", "ignore", "pipe"],
-        })
+        await fsp.rmdir(project(".git"), { recursive: true })
 
         const packageJson = readJSON<PackageJson>(project("package.json"))
 
         writeJSON(project("package.json"), {
           ...packageJson,
           name,
+          description,
           author: app.owner!.username,
         })
 
         try {
           execSync(`${scripts["run-script"][packageManager]} readme`, {
             cwd: project(),
-            stdio: "ignore",
+            stdio: ["ignore", "ignore", "pipe"],
           })
         } catch (error) {
           warns.push("failure to generate README.md")

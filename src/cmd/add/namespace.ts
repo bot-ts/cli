@@ -1,10 +1,10 @@
+import { cwd, format, inputName, isBotTsProject } from "#src/util"
 import { confirm } from "@inquirer/prompts"
 import { Command } from "commander"
 import ejs from "ejs"
-import fs from "fs"
-import path from "path"
-import { styleText } from "util"
-import { cwd, format, inputName, isBotTsProject } from "../../util"
+import fs from "node:fs"
+import path from "node:path"
+import { styleText } from "node:util"
 
 export const handler = async () => {
   if (!isBotTsProject()) return process.exit(1)

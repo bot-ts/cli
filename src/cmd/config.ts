@@ -1,7 +1,7 @@
+import * as database from "#src/cmd/config/database"
+import * as engine from "#src/cmd/config/engine"
 import { select } from "@inquirer/prompts"
 import { Command } from "commander"
-import * as database from "./config/database"
-import * as engine from "./config/engine"
 
 // set database <sqlite3 | pg | "mysql2">
 // set engine <node | bun | deno> <npm | yarn | pnpm | bun | deno>

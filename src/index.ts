@@ -1,12 +1,12 @@
-import path from "path"
-import { PackageJson } from "types-package-json"
-import url from "url"
-import { readJSON } from "./util"
-
 import { program } from "commander"
-import { command as add } from "./cmd/add"
-import { command as config } from "./cmd/config"
-import { command as _new } from "./cmd/new"
+import path from "node:path"
+import url from "node:url"
+import { PackageJson } from "types-package-json"
+
+import { command as add } from "#src/cmd/add"
+import { command as config } from "#src/cmd/config"
+import { command as _new } from "#src/cmd/new"
+import { readJSON } from "#src/util"
 
 const dirname = path.dirname(url.fileURLToPath(import.meta.url))
 
