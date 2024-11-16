@@ -3,5 +3,6 @@
 /pnpm-lock.yaml
 /bin
 .idea
+.vscode
 /pack/
 /test/
