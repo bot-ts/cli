@@ -118,6 +118,11 @@ export const command = new Command("new")
     // database
     const { database, client } = await promptDatabase()
 
+    const readme = await confirm({
+      message: "Do you want to generate a README.md?",
+      default: false,
+    })
+
     const ready = await confirm({
       message: "Ready to generate bot files?",
       default: true,
@@ -160,7 +165,7 @@ export const command = new Command("new")
       await loader(
         "Remove existing project",
         async () => {
-          await fsp.rmdir(project(), { recursive: true })
+          await fsp.rm(project(), { recursive: true })
         },
         "Removed existing project"
       )
@@ -222,9 +227,9 @@ export const command = new Command("new")
         try {
           await fsp.unlink(project(".factory.readme.js"))
           await fsp.unlink(project(".factory.lockfiles.js"))
+          await fsp.rm(project("lockfiles"), { recursive: true })
+          await fsp.rm(project(".git"), { recursive: true })
         } catch {}
-
-        await fsp.rmdir(project(".git"), { recursive: true })
 
         const packageJson = readJSON<PackageJson>(project("package.json"))
 
@@ -235,13 +240,15 @@ export const command = new Command("new")
           author: app.owner!.username,
         })
 
-        try {
-          execSync(`${scripts["run-script"][packageManager]} readme`, {
-            cwd: project(),
-            stdio: ["ignore", "ignore", "pipe"],
-          })
-        } catch (error) {
-          warns.push("failure to generate README.md")
+        if (readme) {
+          try {
+            execSync(`${scripts["run-script"][packageManager]} readme`, {
+              cwd: project(),
+              stdio: ["ignore", "ignore", "pipe"],
+            })
+          } catch (error) {
+            warns.push("failure to generate README.md")
+          }
         }
       },
       "Finished setup"

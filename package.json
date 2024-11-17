@@ -9,7 +9,7 @@
   "type": "commonjs",
   "scripts": {
     "build": "rollup -c",
-    "start": "node bin/index.js",
+    "start": "bun run src/index.ts",
     "format": "prettier --write src events.json update-readme.js",
     "test": "npm run build && npm pack --pack-destination ./pack",
     "prepublishOnly": "npm run format && npm run build"
