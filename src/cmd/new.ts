@@ -220,7 +220,8 @@ export const command = new Command("new")
       "Finishing setup",
       async () => {
         try {
-          await fsp.unlink(project("update-readme.js"))
+          await fsp.unlink(project(".factory.readme.js"))
+          await fsp.unlink(project(".factory.lockfiles.js"))
         } catch {}
 
         await fsp.rmdir(project(".git"), { recursive: true })
