@@ -213,11 +213,17 @@ export const command = new Command("new")
 
     await loader(
       "Installing dependencies",
-      () =>
-        execSync(scripts["install-all"][packageManager], {
+      async () => {
+        await fsp.copyFile(
+          project("lockfiles", scripts["lockfile"][packageManager]),
+          project(scripts["lockfile"][packageManager])
+        )
+
+        execSync(scripts["install-ci"][packageManager], {
           cwd: project(),
           stdio: ["ignore", "ignore", "pipe"],
-        }),
+        })
+      },
       "Installed dependencies"
     )
 
@@ -227,9 +233,12 @@ export const command = new Command("new")
         try {
           await fsp.unlink(project(".factory.readme.js"))
           await fsp.unlink(project(".factory.lockfiles.js"))
+          await fsp.unlink(project(".github", "workflows", "factory.yml"))
           await fsp.rm(project("lockfiles"), { recursive: true })
           await fsp.rm(project(".git"), { recursive: true })
-        } catch {}
+        } catch (err) {
+          warns.push("failure to clean up some boilerplate files")
+        }
 
         const packageJson = readJSON<PackageJson>(project("package.json"))
 

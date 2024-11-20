@@ -276,6 +276,25 @@ export async function setupDatabase(
     await injectEnvLine("DB_DATABASE", database.database, projectPath)
 }
 
+export async function setupWorkflow(
+  config: {
+    runtime: string
+    packageManager: string
+  },
+  projectPath = cwd()
+) {
+  const template = await fsp.readFile(
+    path.join(projectPath, "templates", "workflow.ejs"),
+    "utf8"
+  )
+
+  await fsp.writeFile(
+    path.join(projectPath, ".github", "workflows", "tests.yml"),
+    ejs.compile(template)(config),
+    "utf8"
+  )
+}
+
 export async function setupEngine(
   config: {
     runtime: string
@@ -301,6 +320,7 @@ export async function setupEngine(
     cwd: projectPath,
   })
 
+  await setupWorkflow(config, projectPath)
   return await setupScripts(config, projectPath)
 }
 
