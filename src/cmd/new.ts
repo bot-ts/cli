@@ -203,7 +203,11 @@ export const command = new Command("new")
         await injectEnvLine("BOT_ID", app.id, project())
         await injectEnvLine("BOT_OWNER", app.owner!.id, project())
 
-        scripts = await setupEngine({ runtime, packageManager }, project())
+        scripts = await setupEngine(
+          { runtime, packageManager },
+          { setupDocker: true },
+          project()
+        )
         await setupDatabase({ client, ...database }, project())
       },
       "Initialized configuration"

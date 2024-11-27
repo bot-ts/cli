@@ -1,14 +1,23 @@
 import { isBotTsProject, loader, promptEngine, setupEngine } from "#src/util"
 import { Command } from "commander"
+import { confirm } from "@inquirer/prompts"
 
 export const handler = async () => {
   if (!isBotTsProject()) return process.exit(1)
 
   const engine = await promptEngine()
+  const setupDocker = await confirm({
+    message: "Do you want to overwrite the Dockerfile and compose.yml?",
+    default: false,
+  })
 
   console.log()
 
-  await loader("Updating engine", () => setupEngine(engine), "Updated engine")
+  await loader(
+    "Updating engine",
+    () => setupEngine(engine, { setupDocker }),
+    "Updated engine"
+  )
 
   console.log()
   console.log("✅ Engine has been configured")

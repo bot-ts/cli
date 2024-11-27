@@ -276,29 +276,13 @@ export async function setupDatabase(
     await injectEnvLine("DB_DATABASE", database.database, projectPath)
 }
 
-export async function setupWorkflow(
-  config: {
-    runtime: string
-    packageManager: string
-  },
-  projectPath = cwd()
-) {
-  const template = await fsp.readFile(
-    path.join(projectPath, "templates", "workflow.ejs"),
-    "utf8"
-  )
-
-  await fsp.writeFile(
-    path.join(projectPath, ".github", "workflows", "tests.yml"),
-    ejs.compile(template)(config),
-    "utf8"
-  )
-}
-
 export async function setupEngine(
   config: {
     runtime: string
     packageManager: string
+  },
+  options: {
+    setupDocker?: boolean
   },
   projectPath = cwd()
 ) {
@@ -321,6 +305,7 @@ export async function setupEngine(
   })
 
   await setupWorkflow(config, projectPath)
+  if (options.setupDocker) await setupDocker(config, projectPath)
   return await setupScripts(config, projectPath)
 }
 
@@ -381,4 +366,53 @@ export async function setupScripts(
   )
 
   return components
+}
+
+export async function setupDocker(
+  config: {
+    client?: string
+    runtime: string
+    packageManager: string
+  },
+  projectPath = cwd()
+) {
+  config.client ??= getDatabaseDriverName(
+    readJSON(path.join(projectPath, "package.json"))
+  )
+
+  const [dockerfile, compose] = await Promise.all([
+    fsp.readFile(path.join(projectPath, "templates", "dockerfile.ejs"), "utf8"),
+    fsp.readFile(path.join(projectPath, "templates", "compose.ejs"), "utf8"),
+  ])
+
+  await fsp.writeFile(
+    path.join(projectPath, "Dockerfile"),
+    ejs.compile(dockerfile)(config),
+    "utf8"
+  )
+
+  await fsp.writeFile(
+    path.join(projectPath, "docker-compose.yml"),
+    ejs.compile(compose)(config),
+    "utf8"
+  )
+}
+
+export async function setupWorkflow(
+  config: {
+    runtime: string
+    packageManager: string
+  },
+  projectPath = cwd()
+) {
+  const template = await fsp.readFile(
+    path.join(projectPath, "templates", "workflow.ejs"),
+    "utf8"
+  )
+
+  await fsp.writeFile(
+    path.join(projectPath, ".github", "workflows", "tests.yml"),
+    ejs.compile(template)(config),
+    "utf8"
+  )
 }
