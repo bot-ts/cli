@@ -9,7 +9,7 @@ import { select } from "@inquirer/prompts"
 import { Command } from "commander"
 
 export const command = new Command("add")
-  .description("Generate a bot component")
+  .description("Generate a bot component or add a dependency")
   .addCommand(cmd.command)
   .addCommand(slash.command)
   .addCommand(listener.command)

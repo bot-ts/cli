@@ -223,7 +223,7 @@ export const command = new Command("new")
           project(scripts["lockfile"][packageManager])
         )
 
-        execSync(scripts["install-ci"][packageManager], {
+        execSync(scripts["ci"][packageManager], {
           cwd: project(),
           stdio: ["ignore", "ignore", "pipe"],
         })
@@ -255,7 +255,7 @@ export const command = new Command("new")
 
         if (readme) {
           try {
-            execSync(`${scripts["run-script"][packageManager]} readme`, {
+            execSync(`${scripts["run"][packageManager]} readme`, {
               cwd: project(),
               stdio: ["ignore", "ignore", "pipe"],
             })

@@ -77,7 +77,8 @@ export function isBotTsProject(): boolean {
     )
     return false
   }
-  return true
+
+  return fs.existsSync(cwd("compatibility.json"))
 }
 
 export function getDatabaseDriverName(packageJson: PackageJson) {
@@ -299,7 +300,7 @@ export async function setupEngine(
     } catch {}
   }
 
-  execSync(compatibility.components["install-all"][config.packageManager], {
+  execSync(compatibility.components["install"][config.packageManager], {
     stdio: ["ignore", "ignore", "pipe"],
     cwd: projectPath,
   })

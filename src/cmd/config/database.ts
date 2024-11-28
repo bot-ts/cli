@@ -58,7 +58,7 @@ export const handler = async () => {
     await loader(
       "installing",
       () => {
-        execSync(components["install-all"][env.PACKAGE_MANAGER], {
+        execSync(components["install"][env.PACKAGE_MANAGER], {
           stdio: "ignore",
         })
       },
