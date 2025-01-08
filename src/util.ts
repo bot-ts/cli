@@ -91,10 +91,6 @@ export function getDatabaseDriverName(packageJson: PackageJson) {
   } else throw new Error("No database driver found in package.json")
 }
 
-export async function fetchGenmap() {
-  return readJSON<Record<string, string>>(cwd("genmap.json"))
-}
-
 export function readJSON<T>(srcPath: string): T {
   return JSON.parse(fs.readFileSync(srcPath, "utf8"))
 }
@@ -344,10 +340,16 @@ export async function setupScripts(
 
   const replaceTags = (template: string) => {
     return template.replace(/{([a-z-]+)}/g, (_, tag) => {
-      if ("node" in components[tag]) {
-        return components[tag][config.runtime]
+      if (components[tag]) {
+        if ("node" in components[tag]) {
+          return components[tag][config.runtime]
+        } else {
+          return components[tag][config.packageManager]
+        }
       } else {
-        return components[tag][config.packageManager]
+        throw new Error(
+          `Tag "${tag}" not found in compatibility.json, please remove the tag from the file.`
+        )
       }
     })
   }
