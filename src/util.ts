@@ -155,13 +155,17 @@ export async function promptDatabase(options?: { client?: string }) {
     { value: "mysql2", name: "MySQL" },
   ]
 
-  const client =
-    options?.client ??
-    (await select({
+  let client: string
+
+  if (options?.client) {
+    client = options.client
+  } else {
+    client = await select({
       message: "Select the database client",
       choices,
       default: "sqlite3",
-    }))
+    })
+  }
 
   if (!choices.some((choice) => choice.value === client)) {
     throw new Error(`Invalid database client: "${client}"`)
