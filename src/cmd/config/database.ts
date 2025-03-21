@@ -14,13 +14,13 @@ import { execSync } from "node:child_process"
 import fs from "node:fs"
 import * as util from "node:util"
 
-export const handler = async () => {
+export const handler = async (_?: string, options?: { client?: string }) => {
   if (!isBotTsProject()) return process.exit(1)
 
   // TODO: fetch the current database client
   const baseClient = getDatabaseDriverName(readJSON(cwd("package.json")))
 
-  const { database, client } = await promptDatabase()
+  const { database, client } = await promptDatabase(options)
 
   if (client !== baseClient) {
     console.warn(
@@ -74,5 +74,6 @@ export const command = new Command("database")
   .description(
     "Setup database\nMore info: https://ghom.gitbook.io/bot.ts/usage/use-database"
   )
+  .option("--client <client>", "Database client", "sqlite3")
   .usage("[--options]")
   .action(handler)

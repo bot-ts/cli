@@ -148,16 +148,24 @@ export function format(str: string) {
   })
 }
 
-export async function promptDatabase() {
-  const client = await select({
-    message: "Select the database client",
-    choices: [
-      { value: "sqlite3", name: "SQLite" },
-      { value: "pg", name: "PostgreSQL" },
-      { value: "mysql2", name: "MySQL" },
-    ],
-    default: "sqlite3",
-  })
+export async function promptDatabase(options?: { client?: string }) {
+  const choices = [
+    { value: "sqlite3", name: "SQLite" },
+    { value: "pg", name: "PostgreSQL" },
+    { value: "mysql2", name: "MySQL" },
+  ]
+
+  const client =
+    options?.client ??
+    (await select({
+      message: "Select the database client",
+      choices,
+      default: "sqlite3",
+    }))
+
+  if (!choices.some((choice) => choice.value === client)) {
+    throw new Error(`Invalid database client: "${client}"`)
+  }
 
   let database: {
     host?: string
@@ -167,7 +175,7 @@ export async function promptDatabase() {
     database?: string
   } = {}
 
-  if (client !== "sqlite3") {
+  if (client !== "sqlite3" && !options?.client) {
     database.host = await input({
       message: "Enter the database host",
       default: "127.0.0.1",
