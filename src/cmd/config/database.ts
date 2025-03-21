@@ -22,7 +22,7 @@ export const handler = async (options?: { client?: string }) => {
 
   const { database, client } = await promptDatabase(options)
 
-  if (client !== baseClient) {
+  if (client !== baseClient && !options?.client) {
     console.warn(
       `⚠️ You'll probably need to transfer the old data to the new database client`
     )
@@ -74,6 +74,6 @@ export const command = new Command("database")
   .description(
     "Setup database\nMore info: https://ghom.gitbook.io/bot.ts/usage/use-database"
   )
-  .option("--client <client>", "Database client", "sqlite3")
+  .option("--client <client>", "Database client (sqlite3, pg or mysql2)")
   .usage("[--options]")
   .action(handler)
