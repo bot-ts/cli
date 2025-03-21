@@ -53,6 +53,11 @@ export const handler = async (options?: { client?: string }) => {
 
     const env = dotenv.parse(fs.readFileSync(cwd(".env"), "utf8"))
 
+    if (!env.PACKAGE_MANAGER) {
+      console.error("Please set the PACKAGE_MANAGER in your .env file")
+      process.exit(1)
+    }
+
     console.log()
 
     await loader(

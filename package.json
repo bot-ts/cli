@@ -1,6 +1,6 @@
 {
   "name": "@ghom/bot.ts-cli",
-  "version": "9.0.11",
+  "version": "9.0.12",
   "description": "CLI for make Discord bots in TypeScript quickly with discord.js v14.",
   "main": "bin/index.js",
   "bin": {
