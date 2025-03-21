@@ -129,7 +129,15 @@ export async function injectEnvLine(
   value: string,
   projectPath = cwd()
 ) {
-  const env = await fsp.readFile(path.join(projectPath, ".env"), "utf8")
+  let env: string | undefined
+
+  try {
+    env = await fsp.readFile(path.join(projectPath, ".env"), "utf8")
+  } catch {
+    console.warn("No .env file found, aborted env var injection.")
+    return
+  }
+
   const lines = env.split("\n")
   const index = lines.findIndex((line) => line.split("=")[0] === name)
 

@@ -9,7 +9,7 @@ import {
 } from "#src/util"
 import { confirm } from "@inquirer/prompts"
 import { Command } from "commander"
-import dotenv from "dotenv"
+import dotenv, { DotenvParseOutput } from "dotenv"
 import { execSync } from "node:child_process"
 import fs from "node:fs"
 import * as util from "node:util"
@@ -51,11 +51,15 @@ export const handler = async (options?: { client?: string }) => {
       components: Record<string, Record<string, string>>
     }>(cwd("compatibility.json"))
 
-    const env = dotenv.parse(fs.readFileSync(cwd(".env"), "utf8"))
+    let env: DotenvParseOutput | undefined
 
-    if (!env.PACKAGE_MANAGER) {
-      console.error("Please set the PACKAGE_MANAGER in your .env file")
-      process.exit(1)
+    if (!options?.client) {
+      env = dotenv.parse(fs.readFileSync(cwd(".env"), "utf8"))
+
+      if (!env.PACKAGE_MANAGER) {
+        console.error("Please set the PACKAGE_MANAGER in your .env file")
+        process.exit(1)
+      }
     }
 
     console.log()
@@ -63,7 +67,7 @@ export const handler = async (options?: { client?: string }) => {
     await loader(
       "installing",
       () => {
-        execSync(components["install"][env.PACKAGE_MANAGER], {
+        execSync(components["install"][env?.PACKAGE_MANAGER ?? "npm"], {
           stdio: "ignore",
         })
       },

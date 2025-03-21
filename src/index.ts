@@ -1,5 +1,5 @@
 import { program, Command } from "commander"
-import dotenv from "dotenv"
+import dotenv, { DotenvConfigOutput } from "dotenv"
 import path from "node:path"
 import url from "node:url"
 import cp from "node:child_process"
@@ -30,50 +30,56 @@ if (isBotTsProject()) {
     components: Record<string, Record<string, string>>
   }>(cwd("compatibility.json"))
 
-  const botEnv = dotenv.config({
-    path: cwd(".env"),
-  })
+  let botEnv: DotenvConfigOutput | undefined
 
-  for (const [key, value] of Object.entries(compatibility.components)) {
-    if (key === "lockfile") continue
+  try {
+    botEnv = dotenv.config({
+      path: cwd(".env"),
+    })
+  } catch {}
 
-    const [name, sub] = key.split("-")
+  if (botEnv) {
+    for (const [key, value] of Object.entries(compatibility.components)) {
+      if (key === "lockfile") continue
 
-    const run =
-      "node" in value
-        ? value[botEnv.parsed!.RUNTIME!]
-        : value[botEnv.parsed!.PACKAGE_MANAGER!]
+      const [name, sub] = key.split("-")
 
-    let cmd = bot.commands.find((cmd) => cmd.name() === name)
+      const run =
+        "node" in value
+          ? value[botEnv.parsed!.RUNTIME!]
+          : value[botEnv.parsed!.PACKAGE_MANAGER!]
 
-    if (!cmd) {
-      cmd = new Command(name)
-        .description(`Run the "${run}" command`)
-        .usage("[args] [--options]")
+      let cmd = bot.commands.find((cmd) => cmd.name() === name)
 
-      bot.addCommand(cmd)
-    }
+      if (!cmd) {
+        cmd = new Command(name)
+          .description(`Run the "${run}" command`)
+          .usage("[args] [--options]")
 
-    const action = async () => {
-      cp.execSync(`${run} ${process.argv.slice(2).join(" ")}`, {
-        cwd: process.cwd(),
-      })
-    }
+        bot.addCommand(cmd)
+      }
 
-    if (!sub) {
-      cmd.action(action)
-    } else {
-      cmd.addCommand(
-        new Command(sub)
-          .description(
-            sub === "dev"
-              ? "Add a dev dependency"
-              : sub === "global"
-              ? "Add a global dependency"
-              : "Add a dependency"
-          )
-          .action(action)
-      )
+      const action = async () => {
+        cp.execSync(`${run} ${process.argv.slice(2).join(" ")}`, {
+          cwd: process.cwd(),
+        })
+      }
+
+      if (!sub) {
+        cmd.action(action)
+      } else {
+        cmd.addCommand(
+          new Command(sub)
+            .description(
+              sub === "dev"
+                ? "Add a dev dependency"
+                : sub === "global"
+                ? "Add a global dependency"
+                : "Add a dependency"
+            )
+            .action(action)
+        )
+      }
     }
   }
 }
