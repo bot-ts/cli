@@ -14,7 +14,7 @@ import { execSync } from "node:child_process"
 import fs from "node:fs"
 import * as util from "node:util"
 
-export const handler = async (_?: string, options?: { client?: string }) => {
+export const handler = async (options?: { client?: string }) => {
   if (!isBotTsProject()) return process.exit(1)
 
   // TODO: fetch the current database client
