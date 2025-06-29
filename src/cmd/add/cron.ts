@@ -23,14 +23,14 @@ export const handler = async () => {
         name: `Simple ${styleText("grey", "(hourly, daily, weekly...)")}`,
       },
       {
-        value: '{ type: "hour", duration: 2 } // every 2 hours',
+        value: '{ type: "hour", duration: 2 } /* every 2 hours */',
         name: `Advanced ${styleText(
           "grey",
           "(each X minutes, hours, days...)"
         )}`,
       },
       {
-        value: "{ second: 0, minute: 0, hour: 12 } // everyday at noon",
+        value: "{ second: 0, minute: 0, hour: 12 } /* everyday at noon */",
         name: `Custom ${styleText("grey", "(cron expression)")}`,
       },
     ],
