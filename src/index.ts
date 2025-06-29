@@ -60,7 +60,7 @@ if (isBotTsProject()) {
       }
 
       const action = async () => {
-        cp.execSync(`${run} ${process.argv.slice(2).join(" ")}`, {
+        cp.execSync(`${run} ${process.argv.slice(3).join(" ")}`, {
           cwd: process.cwd(),
         })
       }

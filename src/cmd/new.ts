@@ -223,7 +223,7 @@ export const command = new Command("new")
           project(scripts["lockfile"][packageManager])
         )
 
-        execSync(scripts["ci"][packageManager], {
+        execSync(scripts["install"][packageManager], {
           cwd: project(),
           stdio: ["ignore", "ignore", "pipe"],
         })
@@ -238,6 +238,7 @@ export const command = new Command("new")
           await fsp.unlink(project(".factory.readme.js"))
           await fsp.unlink(project(".factory.lockfiles.js"))
           await fsp.unlink(project(".github", "workflows", "factory.yml"))
+          await fsp.unlink(project(".github", "funding.yml"))
           await fsp.rm(project("lockfiles"), { recursive: true })
           await fsp.rm(project(".git"), { recursive: true })
         } catch (err) {

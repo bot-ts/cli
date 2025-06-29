@@ -403,6 +403,10 @@ export async function setupDocker(
     readJSON(path.join(projectPath, "package.json"))
   )
 
+  const compatibility = readJSON<{
+    components: Record<string, Record<string, string>>
+  }>(path.join(projectPath, "compatibility.json"))
+
   const [dockerfile, compose] = await Promise.all([
     fsp.readFile(path.join(projectPath, "templates", "dockerfile.ejs"), "utf8"),
     fsp.readFile(path.join(projectPath, "templates", "compose.ejs"), "utf8"),
@@ -410,7 +414,10 @@ export async function setupDocker(
 
   await fsp.writeFile(
     path.join(projectPath, "Dockerfile"),
-    ejs.compile(dockerfile)(config),
+    ejs.compile(dockerfile)({
+      ...config,
+      lockfile: compatibility.components.lockfile[config.packageManager],
+    }),
     "utf8"
   )
 
