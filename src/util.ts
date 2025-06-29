@@ -53,28 +53,30 @@ export function isNodeLikeProject(projectPath = cwd()): boolean {
   return fs.existsSync(path.join(projectPath, "package.json"))
 }
 
-export function isBotTsProject(): boolean {
+export function isBotTsProject(silent?: boolean): boolean {
   let packageJson: PackageJson
 
   try {
     packageJson = readJSON<PackageJson>(cwd("package.json"))
   } catch {
-    console.error(
-      util.styleText(
-        "red",
-        'You should only use this command at the root of a "bot.ts" project'
+    if (!silent)
+      console.error(
+        util.styleText(
+          "red",
+          'You should only use this command at the root of a "bot.ts" project'
+        )
       )
-    )
     return false
   }
 
   if (!packageJson.devDependencies?.hasOwnProperty("@ghom/bot.ts-cli")) {
-    console.error(
-      util.styleText(
-        "red",
-        'This project does not seem to be a "bot.ts" project'
+    if (!silent)
+      console.error(
+        util.styleText(
+          "red",
+          'This project does not seem to be a "bot.ts" project'
+        )
       )
-    )
     return false
   }
 

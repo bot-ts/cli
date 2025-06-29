@@ -25,7 +25,7 @@ const bot = program
   .addCommand(add)
   .addCommand(config)
 
-if (isBotTsProject()) {
+if (isBotTsProject(true)) {
   const compatibility = readJSON<{
     components: Record<string, Record<string, string>>
   }>(cwd("compatibility.json"))
