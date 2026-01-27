@@ -248,7 +248,7 @@ export async function promptEngine() {
 
 export async function setupDatabase(
   database: {
-    client: string
+    client: string | null
     host?: string
     port?: string
     password?: string
@@ -265,8 +265,11 @@ export async function setupDatabase(
 
   // delete all other database dependencies.
   for (const dbname of ["sqlite3", "mysql2", "pg"]) {
-    if (dbname !== database.client) delete packageJson.dependencies[dbname]
-    else packageJson.dependencies[dbname] = "latest"
+    if (database.client === null || dbname !== database.client) {
+      delete packageJson.dependencies[dbname]
+    } else {
+      packageJson.dependencies[dbname] = "latest"
+    }
   }
 
   writeJSON(path.join(projectPath, "package.json"), packageJson)
@@ -286,13 +289,102 @@ export async function setupDatabase(
     "utf8"
   )
 
-  if (database.host) await injectEnvLine("DB_HOST", database.host, projectPath)
-  if (database.port) await injectEnvLine("DB_PORT", database.port, projectPath)
-  if (database.user) await injectEnvLine("DB_USER", database.user, projectPath)
-  if (database.password)
-    await injectEnvLine("DB_PASSWORD", database.password, projectPath)
-  if (database.database)
-    await injectEnvLine("DB_DATABASE", database.database, projectPath)
+  // Only inject env lines if a database is configured
+  if (database.client) {
+    if (database.host)
+      await injectEnvLine("DB_HOST", database.host, projectPath)
+    if (database.port)
+      await injectEnvLine("DB_PORT", database.port, projectPath)
+    if (database.user)
+      await injectEnvLine("DB_USER", database.user, projectPath)
+    if (database.password)
+      await injectEnvLine("DB_PASSWORD", database.password, projectPath)
+    if (database.database)
+      await injectEnvLine("DB_DATABASE", database.database, projectPath)
+  } else {
+    await removeEnvLine("DB_HOST", projectPath)
+    await removeEnvLine("DB_PORT", projectPath)
+    await removeEnvLine("DB_USER", projectPath)
+    await removeEnvLine("DB_PASSWORD", projectPath)
+    await removeEnvLine("DB_DATABASE", projectPath)
+  }
+}
+
+export async function removeDatabase(projectPath = cwd()) {
+  const packageJson = readJSON<PackageJson>(
+    path.join(projectPath, "package.json")
+  )
+
+  // Remove all database dependencies
+  if (packageJson.dependencies) {
+    for (const dbname of ["sqlite3", "mysql2", "pg"]) {
+      delete packageJson.dependencies[dbname]
+    }
+  }
+
+  writeJSON(path.join(projectPath, "package.json"), packageJson)
+
+  // Remove database environment variables from .env
+  await removeEnvLine("DB_HOST", projectPath)
+  await removeEnvLine("DB_PORT", projectPath)
+  await removeEnvLine("DB_USER", projectPath)
+  await removeEnvLine("DB_PASSWORD", projectPath)
+  await removeEnvLine("DB_DATABASE", projectPath)
+
+  // Reset database.ts to a disabled state
+  const databaseFilePath = path.join(projectPath, "src", "core", "database.ts")
+
+  if (fs.existsSync(databaseFilePath)) {
+    const template = await fsp.readFile(
+      path.join(projectPath, "templates", "database.ejs"),
+      "utf8"
+    )
+
+    await fsp.writeFile(
+      databaseFilePath,
+      format(
+        ejs.compile(template)({
+          client: null,
+        })
+      ),
+      "utf8"
+    )
+  }
+}
+
+export async function removeEnvLine(name: string, projectPath = cwd()) {
+  let env: string | undefined
+
+  try {
+    env = await fsp.readFile(path.join(projectPath, ".env"), "utf8")
+  } catch {
+    return
+  }
+
+  const lines = env.split("\n")
+  const filteredLines = lines.filter((line) => {
+    const key = line.split("=")[0]
+    return key !== name
+  })
+
+  await fsp.writeFile(
+    path.join(projectPath, ".env"),
+    filteredLines.join("\n"),
+    "utf8"
+  )
+}
+
+export function getExistingTables(projectPath = cwd()): string[] {
+  const tablesDir = path.join(projectPath, "src", "tables")
+
+  if (!fs.existsSync(tablesDir)) {
+    return []
+  }
+
+  return fs
+    .readdirSync(tablesDir)
+    .filter((file) => file.endsWith(".ts"))
+    .map((file) => file.replace(".ts", ""))
 }
 
 export async function setupEngine(

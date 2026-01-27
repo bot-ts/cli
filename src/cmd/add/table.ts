@@ -1,10 +1,19 @@
-import { capitalize, cwd, format, inputName, isBotTsProject } from "#src/util"
+import {
+  capitalize,
+  cwd,
+  format,
+  getDatabaseDriverName,
+  inputName,
+  isBotTsProject,
+  readJSON,
+} from "#src/util"
 import { confirm, input, number, select } from "@inquirer/prompts"
 import { Command } from "commander"
 import ejs from "ejs"
 import fs from "node:fs"
 import path from "node:path"
 import { styleText } from "node:util"
+import { PackageJson } from "types-package-json"
 
 const TYPES = [
   "string",
@@ -18,6 +27,20 @@ const TYPES = [
 
 export const handler = async () => {
   if (!isBotTsProject()) return process.exit(1)
+
+  // Check if a database is configured
+  const packageJson = readJSON<PackageJson>(cwd("package.json"))
+  try {
+    getDatabaseDriverName(packageJson)
+  } catch {
+    console.error(
+      styleText(
+        "red",
+        "No database is configured. Please run `bot config database` first."
+      )
+    )
+    return process.exit(1)
+  }
 
   const name = await inputName("Enter the table name")
 

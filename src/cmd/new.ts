@@ -116,7 +116,12 @@ export const command = new Command("new")
     const { runtime, packageManager } = await promptEngine()
 
     // database
-    const { database, client } = await promptDatabase()
+    const useDatabase = await confirm({
+      message: "Do you want to use a database?",
+      default: true,
+    })
+
+    const database = useDatabase ? await promptDatabase() : null
 
     const readme = await confirm({
       message: "Do you want to generate a README.md?",
@@ -208,7 +213,16 @@ export const command = new Command("new")
           { setupDocker: true },
           project()
         )
-        await setupDatabase({ client, ...database }, project())
+
+        if (database) {
+          await setupDatabase(
+            { client: database.client, ...database.database },
+            project()
+          )
+        } else {
+          // Initialize database.ts with no database configured
+          await setupDatabase({ client: null }, project())
+        }
       },
       "Initialized configuration"
     )
