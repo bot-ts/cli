@@ -493,9 +493,15 @@ export async function setupDocker(
   },
   projectPath = cwd()
 ) {
-  config.client ??= getDatabaseDriverName(
-    readJSON(path.join(projectPath, "package.json"))
-  )
+  if (config.client === undefined) {
+    try {
+      config.client = getDatabaseDriverName(
+        readJSON(path.join(projectPath, "package.json"))
+      )
+    } catch {
+      // no database configured
+    }
+  }
 
   const compatibility = readJSON<{
     components: Record<string, Record<string, string>>
